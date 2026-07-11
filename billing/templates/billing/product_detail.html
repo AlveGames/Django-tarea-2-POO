@@ -1,0 +1,153 @@
+{% extends 'billing/base.html' %}
+{% load static %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center mb-4 gap-2">
+  <a href="{% url 'billing:product_list' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Volver al listado
+  </a>
+  <h2 class="mb-0 ms-2">Detalle del Producto</h2>
+</div>
+
+<div class="card shadow-sm border-0" style="border-radius:1rem;overflow:hidden;">
+  <div class="row g-0">
+
+    <!-- Columna izquierda: imagen -->
+    <div class="col-md-4 d-flex align-items-center justify-content-center bg-light"
+         style="min-height:320px;">
+      {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}"
+             class="img-fluid p-3"
+             style="max-height:380px;object-fit:contain;border-radius:1rem;">
+      {% else %}
+        <img src="{% static 'img/no-image.png' %}" alt="Sin imagen"
+             class="img-fluid p-3"
+             style="max-height:380px;object-fit:contain;border-radius:1rem;opacity:.7;">
+      {% endif %}
+    </div>
+
+    <!-- Columna derecha: datos -->
+    <div class="col-md-8">
+      <div class="card-body p-4 p-md-5">
+
+        <h3 class="card-title fw-bold mb-1">{{ product.name }}</h3>
+        <p class="text-muted mb-4 small">
+          <i class="bi bi-hash"></i> ID {{ product.pk }} &nbsp;·&nbsp;
+          {% if product.is_active %}
+            <span class="badge bg-success">Activo</span>
+          {% else %}
+            <span class="badge bg-secondary">Inactivo</span>
+          {% endif %}
+        </p>
+
+        <div class="row gy-3">
+
+          <div class="col-sm-6">
+            <div class="p-3 rounded-3 bg-light h-100">
+              <p class="text-muted small mb-1 text-uppercase fw-semibold">
+                <i class="bi bi-tag me-1"></i>Marca
+              </p>
+              <p class="mb-0 fw-semibold fs-6">{{ product.brand.name }}</p>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 rounded-3 bg-light h-100">
+              <p class="text-muted small mb-1 text-uppercase fw-semibold">
+                <i class="bi bi-folder me-1"></i>Grupo
+              </p>
+              <p class="mb-0 fw-semibold fs-6">{{ product.group.name }}</p>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 rounded-3 bg-light h-100">
+              <p class="text-muted small mb-1 text-uppercase fw-semibold">
+                <i class="bi bi-currency-dollar me-1"></i>Precio unitario
+              </p>
+              <p class="mb-0 fw-bold fs-4 text-success">${{ product.unit_price }}</p>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 rounded-3 bg-light h-100">
+              <p class="text-muted small mb-1 text-uppercase fw-semibold">
+                <i class="bi bi-boxes me-1"></i>Stock
+              </p>
+              <p class="mb-0 fw-semibold fs-6
+                {% if product.stock <= 5 %}text-danger{% endif %}">
+                {{ product.stock }} unidades
+                {% if product.stock <= 5 %}
+                  <span class="badge bg-danger ms-1">Bajo stock</span>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+
+          {% if product.suppliers.exists %}
+          <div class="col-12">
+            <div class="p-3 rounded-3 bg-light">
+              <p class="text-muted small mb-2 text-uppercase fw-semibold">
+                <i class="bi bi-truck me-1"></i>Proveedores
+              </p>
+              <div class="d-flex flex-wrap gap-2">
+                {% for s in product.suppliers.all %}
+                  <span class="badge bg-info text-dark fs-6 px-3 py-2">{{ s.name }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if product.description %}
+          <div class="col-12">
+            <div class="p-3 rounded-3 bg-light">
+              <p class="text-muted small mb-1 text-uppercase fw-semibold">
+                <i class="bi bi-card-text me-1"></i>Descripción
+              </p>
+              <p class="mb-0">{{ product.description }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="col-sm-6">
+            <div class="p-3 rounded-3 bg-light h-100">
+              <p class="text-muted small mb-1 text-uppercase fw-semibold">
+                <i class="bi bi-calendar-plus me-1"></i>Creado
+              </p>
+              <p class="mb-0 small">{{ product.created_at|date:"d/m/Y H:i" }}</p>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="p-3 rounded-3 bg-light h-100">
+              <p class="text-muted small mb-1 text-uppercase fw-semibold">
+                <i class="bi bi-calendar-check me-1"></i>Actualizado
+              </p>
+              <p class="mb-0 small">{{ product.updated_at|date:"d/m/Y H:i" }}</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="mt-4 d-flex gap-2 flex-wrap">
+          <a href="{% url 'billing:product_update' product.pk %}" class="btn btn-warning">
+            <i class="bi bi-pencil-square me-1"></i>Editar producto
+          </a>
+          <a href="{% url 'billing:product_delete' product.pk %}" class="btn btn-outline-danger">
+            <i class="bi bi-trash me-1"></i>Eliminar
+          </a>
+          <a href="{% url 'billing:product_list' %}" class="btn btn-outline-secondary ms-auto">
+            <i class="bi bi-arrow-left me-1"></i>Volver al listado
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

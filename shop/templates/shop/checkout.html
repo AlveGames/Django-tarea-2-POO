@@ -1,0 +1,192 @@
+{% extends 'billing/base.html' %}
+{% load static %}
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+
+<style>
+  .payment-option {
+    border: 2px solid #dee2e6;
+    border-radius: .6rem;
+    padding: .9rem 1rem;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+  }
+  .payment-option:hover { border-color: #93c5fd; background: #f8fafc; }
+  .payment-option input[type="radio"] { margin: 0; }
+  .payment-option.checked { border-color: #2563eb; background: #eff6ff; }
+  .payment-option .emoji { font-size: 1.4rem; }
+  .payment-fields { display: none; }
+  .payment-fields.active { display: block; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h2 class="mb-0">Finalizar compra</h2>
+  <a href="{% url 'shop:cart' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Volver al carrito
+  </a>
+</div>
+
+<form method="post" action="{% url 'shop:process_payment' %}" id="checkout-form">
+  {% csrf_token %}
+  <div class="row g-4">
+
+    <div class="col-lg-7">
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">Datos del cliente</div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre completo</label>
+              {{ form.full_name }}
+              {% for e in form.full_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Correo electrónico</label>
+              {{ form.email }}
+              {% for e in form.email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Teléfono</label>
+              {{ form.phone }}
+              {% for e in form.phone.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cédula/RUC</label>
+              {{ form.dni }}
+              {% for e in form.dni.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Dirección de entrega</label>
+              {{ form.address }}
+              {% for e in form.address.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">Método de pago</div>
+        <div class="card-body">
+
+          <div class="row g-2 mb-3">
+            {% for radio in form.payment_method %}
+            <div class="col-md-4">
+              <label class="payment-option" for="{{ radio.id_for_label }}">
+                {{ radio.tag }}
+                <span class="emoji">
+                  {% if radio.data.value == 'card' %}💳
+                  {% elif radio.data.value == 'paypal' %}🅿️
+                  {% elif radio.data.value == 'transfer' %}🏦
+                  {% endif %}
+                </span>
+                <span>{{ radio.choice_label }}</span>
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+          {% for e in form.payment_method.errors %}<div class="text-danger small mb-2">{{ e }}</div>{% endfor %}
+
+          <div class="payment-fields" data-method="card">
+            <div class="row g-3">
+              <div class="col-md-12">
+                <label class="form-label">Número de tarjeta</label>
+                {{ form.card_number }}
+                {% for e in form.card_number.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                <small class="text-muted">Solo se guardarán los últimos 4 dígitos.</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Fecha de expiración</label>
+                {{ form.card_expiry }}
+                {% for e in form.card_expiry.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">CVV</label>
+                {{ form.card_cvv }}
+                {% for e in form.card_cvv.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="payment-fields" data-method="paypal">
+            <label class="form-label">Correo de PayPal</label>
+            {{ form.paypal_email }}
+            {% for e in form.paypal_email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="payment-fields" data-method="transfer">
+            <label class="form-label">Número de cuenta</label>
+            {{ form.bank_account }}
+            {% for e in form.bank_account.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-header fw-semibold">Resumen de la orden</div>
+        <div class="card-body">
+          {% for item in items %}
+          <div class="d-flex justify-content-between small mb-2">
+            <span>{{ item.name }} <span class="text-muted">x{{ item.quantity }}</span></span>
+            <span>${{ item.subtotal }}</span>
+          </div>
+          {% endfor %}
+          <hr>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Subtotal</span>
+            <span>${{ subtotal }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>IVA (15%)</span>
+            <span>${{ iva_amount }}</span>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between fw-bold fs-5">
+            <span>Total</span>
+            <span>${{ total }}</span>
+          </div>
+          <button type="submit" class="btn btn-success w-100 mt-4">
+            <i class="bi bi-lock-fill me-1"></i> Pagar ahora
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</form>
+
+<script>
+(function () {
+  'use strict';
+  var radios = document.querySelectorAll('.payment-radio');
+  var options = document.querySelectorAll('.payment-option');
+  var fieldGroups = document.querySelectorAll('.payment-fields');
+
+  function sync() {
+    var selected = document.querySelector('.payment-radio:checked');
+    var method = selected ? selected.value : null;
+
+    options.forEach(function (opt) {
+      var input = opt.querySelector('.payment-radio');
+      opt.classList.toggle('checked', !!input && input.checked);
+    });
+
+    fieldGroups.forEach(function (group) {
+      group.classList.toggle('active', group.dataset.method === method);
+    });
+  }
+
+  radios.forEach(function (r) { r.addEventListener('change', sync); });
+  sync();
+})();
+</script>
+
+{% endblock %}

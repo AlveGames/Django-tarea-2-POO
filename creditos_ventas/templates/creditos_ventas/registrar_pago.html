@@ -1,0 +1,48 @@
+{% extends 'billing/base.html' %}
+{% block title %}Registrar Pago - Cuota {{ cuota.numero }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-header bg-warning text-dark"><h4>Registrar Pago</h4></div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div><strong>Cuota N°:</strong> {{ cuota.numero }}</div>
+          <div><strong>Factura:</strong> #{{ cuota.factura.pk }} - {{ cuota.factura.customer }}</div>
+          <div><strong>Valor de la cuota:</strong> ${{ cuota.valor }}</div>
+          <div><strong>Saldo pendiente:</strong> ${{ cuota.saldo }}</div>
+        </div>
+        <hr>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Fecha</label>
+            {{ form.fecha }}
+            {% for error in form.fecha.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Valor</label>
+            {{ form.valor }}
+            {% for error in form.valor.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Observación</label>
+            {{ form.observacion }}
+            {% for error in form.observacion.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="btn btn-warning">
+            <i class="bi bi-cash-coin"></i> Registrar Pago
+          </button>
+          <a href="{% url 'creditos_ventas:cuota_list' cuota.factura.pk %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

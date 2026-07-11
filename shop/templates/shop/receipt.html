@@ -1,0 +1,161 @@
+{% extends 'billing/base.html' %}
+{% load static %}
+{% block title %}Recibo {{ order.order_number }}{% endblock %}
+
+{% block content %}
+
+<style>
+  .receipt-header {
+    background: #16a34a;
+    color: #fff;
+    border-radius: .75rem;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .receipt-header .check-icon { font-size: 3rem; }
+  .receipt-card { border: none; border-radius: .75rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .receipt-label { color: #6b7280; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+  .receipt-value { font-weight: 600; }
+  @media print {
+    .no-print { display: none !important; }
+    .navbar { display: none !important; }
+  }
+</style>
+
+<div class="receipt-header">
+  <div class="check-icon">✅</div>
+  <h2 class="mb-1 mt-2">¡Pago Aprobado!</h2>
+  <p class="mb-0">Orden <strong>{{ order.order_number }}</strong> — {{ order.created_at|date:"d/m/Y H:i" }}</p>
+</div>
+
+<div class="d-flex justify-content-end gap-2 mb-3 no-print">
+  <button onclick="window.print()" class="btn btn-outline-secondary">
+    <i class="bi bi-printer me-1"></i> Imprimir
+  </button>
+  <a href="{% url 'shop:catalog' %}" class="btn btn-primary">
+    <i class="bi bi-shop me-1"></i> Volver al catálogo
+  </a>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <div class="card receipt-card h-100">
+      <div class="card-header fw-semibold">Datos del cliente</div>
+      <div class="card-body">
+        <div class="mb-2">
+          <div class="receipt-label">Nombre</div>
+          <div class="receipt-value">{{ order.full_name }}</div>
+        </div>
+        <div class="mb-2">
+          <div class="receipt-label">Correo</div>
+          <div class="receipt-value">{{ order.email }}</div>
+        </div>
+        <div class="mb-2">
+          <div class="receipt-label">Teléfono</div>
+          <div class="receipt-value">{{ order.phone }}</div>
+        </div>
+        <div class="mb-2">
+          <div class="receipt-label">Cédula/RUC</div>
+          <div class="receipt-value">{{ order.dni }}</div>
+        </div>
+        <div>
+          <div class="receipt-label">Dirección</div>
+          <div class="receipt-value">{{ order.address }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card receipt-card h-100">
+      <div class="card-header fw-semibold">Datos de la factura</div>
+      <div class="card-body">
+        <div class="mb-2">
+          <div class="receipt-label">Número de orden</div>
+          <div class="receipt-value">{{ order.order_number }}</div>
+        </div>
+        <div class="mb-2">
+          <div class="receipt-label">Estado</div>
+          <div><span class="badge bg-success">Pagado</span></div>
+        </div>
+        <div class="mb-2">
+          <div class="receipt-label">Método de pago</div>
+          <div class="receipt-value">
+            {% if order.payment_method == 'card' %}
+              💳 Tarjeta terminada en {{ order.card_last4 }}
+            {% elif order.payment_method == 'paypal' %}
+              🅿️ PayPal ({{ order.payment_reference }})
+            {% elif order.payment_method == 'transfer' %}
+              🏦 Transferencia bancaria ({{ order.payment_reference }})
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <div class="receipt-label">Fecha</div>
+          <div class="receipt-value">{{ order.created_at|date:"d/m/Y H:i" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card receipt-card mb-4">
+  <div class="card-header fw-semibold">Productos</div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Producto</th>
+          <th class="text-end">Precio original</th>
+          <th class="text-end">Descuento</th>
+          <th class="text-end">Precio unitario</th>
+          <th class="text-center">Cantidad</th>
+          <th class="text-end">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for detail in order.details.all %}
+        <tr>
+          <td>{{ detail.product.name }}</td>
+          <td class="text-end">${{ detail.original_price }}</td>
+          <td class="text-end">
+            {% if detail.discount > 0 %}
+              <span class="badge bg-danger">-{{ detail.discount }}%</span>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td class="text-end">${{ detail.unit_price }}</td>
+          <td class="text-center">{{ detail.quantity }}</td>
+          <td class="text-end fw-semibold">${{ detail.subtotal }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="row justify-content-end">
+  <div class="col-md-5">
+    <div class="card receipt-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+          <span>Subtotal</span>
+          <span>${{ order.subtotal }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span>IVA (15%)</span>
+          <span>${{ order.iva_amount }}</span>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between fw-bold fs-5">
+          <span>Total pagado</span>
+          <span class="text-success">${{ order.total }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

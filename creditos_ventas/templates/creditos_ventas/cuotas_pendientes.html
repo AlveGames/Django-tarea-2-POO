@@ -1,0 +1,49 @@
+{% extends 'billing/base.html' %}
+{% block title %}Cuotas Pendientes{% endblock %}
+{% block content %}
+<h2>Cuotas Pendientes</h2>
+
+<table class="table table-striped table-hover align-middle">
+  <thead class="table-dark">
+    <tr>
+      <th>Factura</th>
+      <th>Cliente</th>
+      <th>N° Cuota</th>
+      <th>Fecha Vencimiento</th>
+      <th>Vencimiento</th>
+      <th class="text-end">Valor</th>
+      <th class="text-end">Saldo</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for cuota in cuotas %}
+    <tr class="{% if cuota.fecha_vencimiento < hoy %}table-danger{% endif %}">
+      <td>
+        <a href="{% url 'creditos_ventas:cuota_list' cuota.factura.pk %}">#{{ cuota.factura.pk }}</a>
+      </td>
+      <td>{{ cuota.factura.customer }}</td>
+      <td>{{ cuota.numero }}</td>
+      <td>
+        {{ cuota.fecha_vencimiento|date:"d/m/Y" }}
+        {% if cuota.fecha_vencimiento < hoy %}
+        <span class="badge bg-danger ms-1">Vencida</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if cuota.dias_diff < 0 %}
+          <span class="badge bg-danger">Vencida hace {{ cuota.dias_abs }} día{{ cuota.dias_abs|pluralize }}</span>
+        {% elif cuota.dias_diff == 0 %}
+          <span class="badge bg-warning text-dark">Vence hoy</span>
+        {% else %}
+          <span class="badge bg-success">Faltan {{ cuota.dias_diff }} día{{ cuota.dias_diff|pluralize }}</span>
+        {% endif %}
+      </td>
+      <td class="text-end">${{ cuota.valor }}</td>
+      <td class="text-end">${{ cuota.saldo }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" class="text-center">No hay cuotas pendientes.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

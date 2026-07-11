@@ -1,0 +1,258 @@
+{% extends 'billing/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-warning text-dark"><h4>{{ title }}</h4></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-bold">Customer</label>
+                {{ form.customer }}
+                {% for error in form.customer.errors %}
+                <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <h5 class="mt-4 mb-3">Invoice Details</h5>
+            {{ formset.management_form }}
+            <table class="table table-bordered">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th class="text-center">Aplica IVA</th>
+                        <th>Subtotal</th>
+                        <th class="text-center">Delete</th>
+                    </tr>
+                </thead>
+                <tbody id="formset-rows">
+                {% for detail_form in formset %}
+                <tr class="formset-row">
+                    <td>{{ detail_form.product }}</td>
+                    <td>{{ detail_form.quantity }}</td>
+                    <td>{{ detail_form.unit_price }}</td>
+                    <td class="text-center">{{ detail_form.applies_iva }}</td>
+                    <td class="text-end row-subtotal">0.00</td>
+                    <td class="text-center">
+                        {{ detail_form.id }}
+                        <button type="button" class="btn btn-danger btn-sm delete-row-btn" title="Eliminar fila">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                    {% for error in detail_form.errors.values %}
+                    <td colspan="6" class="text-danger">{{ error }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="d-flex justify-content-end">
+                <table class="table table-sm w-auto">
+                    <tbody>
+                        <tr>
+                            <td class="text-end pe-3">Subtotal gravado (con IVA):</td>
+                            <td class="text-end">$<span id="subtotal-iva">0.00</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-end pe-3">Subtotal tarifa 0% (sin IVA):</td>
+                            <td class="text-end">$<span id="subtotal-0">0.00</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-end pe-3">IVA 15%:</td>
+                            <td class="text-end">$<span id="iva-amount">0.00</span></td>
+                        </tr>
+                        <tr class="table-warning fw-bold fs-5">
+                            <td class="text-end pe-3">TOTAL:</td>
+                            <td class="text-end">$<span id="grand-total">0.00</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="button" id="add-row-btn" class="btn btn-success mb-3">
+                <i class="bi bi-plus-lg"></i> Agregar Producto
+            </button>
+            <br>
+            <button type="submit" class="btn btn-warning">Create Invoice</button>
+            <a href="{% url 'billing:invoice_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+{# Fila plantilla oculta usada por JS para clonar nuevas filas del formset #}
+<table style="display:none">
+<tbody>
+    <tr id="empty-form-row">
+        <td>{{ formset.empty_form.product }}</td>
+        <td>{{ formset.empty_form.quantity }}</td>
+        <td>{{ formset.empty_form.unit_price }}</td>
+        <td class="text-center">{{ formset.empty_form.applies_iva }}</td>
+        <td class="text-end row-subtotal">0.00</td>
+        <td class="text-center">
+            {{ formset.empty_form.id }}
+            <button type="button" class="btn btn-danger btn-sm delete-row-btn" title="Eliminar fila">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    </tr>
+</tbody>
+</table>
+
+{# URL base del endpoint; el 0 se reemplaza con el pk real en JS #}
+<span id="price-url-tpl"
+      data-url="{% url 'billing:product_price' pk=0 %}"
+      style="display:none"></span>
+
+<script>
+(function () {
+  'use strict';
+
+  const FORM_PREFIX = '{{ formset.prefix }}';
+  const PRICE_FIELD = 'unit_price';
+  const IVA_RATE = 0.15;
+
+  const urlTemplate = document.getElementById('price-url-tpl').dataset.url;
+  const totalFormsInput = document.getElementById('id_' + FORM_PREFIX + '-TOTAL_FORMS');
+  const rowsContainer = document.getElementById('formset-rows');
+  const emptyFormRow = document.getElementById('empty-form-row');
+  const addRowBtn = document.getElementById('add-row-btn');
+  const grandTotalEl = document.getElementById('grand-total');
+  const subtotalIvaEl = document.getElementById('subtotal-iva');
+  const subtotal0El = document.getElementById('subtotal-0');
+  const ivaAmountEl = document.getElementById('iva-amount');
+
+  function priceUrl(pk) {
+    // "/products/0/price/" → "/products/42/price/"
+    return urlTemplate.replace('/0/', '/' + pk + '/');
+  }
+
+  function computeRowSubtotal(row) {
+    const qtyInput = row.querySelector('input[name$="-quantity"]');
+    const priceInput = row.querySelector('input[name$="-' + PRICE_FIELD + '"]');
+    const qty = qtyInput ? parseFloat(qtyInput.value) : 0;
+    const price = priceInput ? parseFloat(priceInput.value) : 0;
+    const subtotal = (isNaN(qty) || isNaN(price)) ? 0 : qty * price;
+
+    const subtotalCell = row.querySelector('.row-subtotal');
+    if (subtotalCell) subtotalCell.textContent = subtotal.toFixed(2);
+
+    return subtotal;
+  }
+
+  function rowAppliesIva(row) {
+    const checkbox = row.querySelector('input[name$="-applies_iva"]');
+    return checkbox ? checkbox.checked : true;
+  }
+
+  function updateGrandTotal() {
+    let subtotalIva = 0;
+    let subtotal0 = 0;
+
+    rowsContainer.querySelectorAll('tr.formset-row').forEach(function (row) {
+      const rowSubtotal = computeRowSubtotal(row);
+      if (rowAppliesIva(row)) {
+        subtotalIva += rowSubtotal;
+      } else {
+        subtotal0 += rowSubtotal;
+      }
+    });
+
+    const ivaAmount = subtotalIva * IVA_RATE;
+    const total = subtotalIva + subtotal0 + ivaAmount;
+
+    subtotalIvaEl.textContent = subtotalIva.toFixed(2);
+    subtotal0El.textContent = subtotal0.toFixed(2);
+    ivaAmountEl.textContent = ivaAmount.toFixed(2);
+    grandTotalEl.textContent = total.toFixed(2);
+  }
+
+  function attachAutoFill(selectEl) {
+    selectEl.addEventListener('change', function () {
+      const pk = this.value;
+      if (!pk) return;
+
+      const row = this.closest('tr.formset-row');
+      if (!row) return;
+
+      const priceInput = row.querySelector('input[name$="-' + PRICE_FIELD + '"]');
+      const ivaCheckbox = row.querySelector('input[name$="-applies_iva"]');
+      if (!priceInput) return;
+
+      fetch(priceUrl(pk))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          priceInput.value = data.price;
+          if (ivaCheckbox) ivaCheckbox.checked = !!data.applies_iva;
+          updateGrandTotal();
+        })
+        .catch(function () {});
+    });
+  }
+
+  function attachDelete(row) {
+    const btn = row.querySelector('.delete-row-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      row.remove();
+      renumberRows();
+      updateGrandTotal();
+    });
+  }
+
+  function attachRowListeners(row) {
+    attachDelete(row);
+    const productSelect = row.querySelector('select[name$="-product"]');
+    if (productSelect) attachAutoFill(productSelect);
+  }
+
+  function renumberRows() {
+    const rows = rowsContainer.querySelectorAll('tr.formset-row');
+    const nameRe = new RegExp('^' + FORM_PREFIX + '-\\d+-');
+    const idRe = new RegExp('^id_' + FORM_PREFIX + '-\\d+-');
+
+    rows.forEach(function (row, index) {
+      row.querySelectorAll('input, select, textarea').forEach(function (el) {
+        if (el.name) el.name = el.name.replace(nameRe, FORM_PREFIX + '-' + index + '-');
+        if (el.id) el.id = el.id.replace(idRe, 'id_' + FORM_PREFIX + '-' + index + '-');
+      });
+    });
+
+    totalFormsInput.value = rows.length;
+  }
+
+  function addRow() {
+    const index = rowsContainer.querySelectorAll('tr.formset-row').length;
+    const html = emptyFormRow.innerHTML
+      .split('__prefix__').join(index);
+
+    const newRow = document.createElement('tr');
+    newRow.className = 'formset-row';
+    newRow.innerHTML = html;
+
+    rowsContainer.appendChild(newRow);
+    totalFormsInput.value = index + 1;
+    attachRowListeners(newRow);
+    updateGrandTotal();
+  }
+
+  rowsContainer.querySelectorAll('tr.formset-row').forEach(attachRowListeners);
+  addRowBtn.addEventListener('click', addRow);
+
+  // Recalcula subtotal/total en vivo al editar cantidad, precio o el checkbox de IVA, sin recargar la página
+  rowsContainer.addEventListener('input', function (e) {
+    if (e.target.matches('input[name$="-quantity"], input[name$="-' + PRICE_FIELD + '"], input[name$="-applies_iva"]')) {
+      updateGrandTotal();
+    }
+  });
+  rowsContainer.addEventListener('change', function (e) {
+    if (e.target.matches('input[name$="-applies_iva"]')) {
+      updateGrandTotal();
+    }
+  });
+
+  updateGrandTotal();
+})();
+</script>
+{% endblock %}

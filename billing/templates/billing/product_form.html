@@ -1,0 +1,398 @@
+{% extends 'billing/base.html' %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Product{% endblock %}
+
+{% block content %}
+
+{# ── Cabecera ─────────────────────────────────────────────────────────── #}
+<div class="d-flex align-items-center mb-4 gap-2 flex-wrap">
+  <a href="{% url 'billing:product_list' %}" class="btn btn-outline-secondary btn-sm">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+         class="bi bi-arrow-left me-1" viewBox="0 0 16 16">
+      <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+    </svg>
+    Back to list
+  </a>
+  <h2 class="mb-0">
+    {% if form.instance.pk %}
+      Edit Product &mdash; <span class="text-primary fw-normal">{{ form.instance.name }}</span>
+    {% else %}
+      New Product
+    {% endif %}
+  </h2>
+</div>
+
+{# ── Non-field errors ─────────────────────────────────────────────────── #}
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+  {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<style>
+  .field-group { margin-bottom: 1.4rem; }
+  .field-group .form-label { margin-bottom: .35rem; font-weight: 600; }
+  .field-group .form-text  { font-size: .8rem; color: #6c757d; }
+  .field-error { font-size: .83rem; color: #dc3545; margin-top: .25rem; }
+
+  /* Supplier checkboxes */
+  .supplier-grid { list-style: none; padding: 0; margin: 0;
+                   display: grid; grid-template-columns: 1fr 1fr; gap: .2rem .5rem; }
+  .supplier-grid li label { cursor: pointer; font-size: .875rem; }
+  .supplier-grid li input[type=checkbox] { accent-color: #0d6efd; }
+
+  /* Image preview */
+  #img-wrap {
+    width: 180px; height: 180px; border-radius: .75rem;
+    overflow: hidden; border: 2px dashed #dee2e6;
+    display: flex; align-items: center; justify-content: center;
+    background: #f8f9fa; margin: 0 auto .75rem;
+    transition: border-color .2s;
+  }
+  #img-wrap:hover { border-color: #0d6efd; }
+  #img-preview { width: 100%; height: 100%; object-fit: contain; }
+  #img-placeholder { color: #adb5bd; text-align: center; }
+
+  /* Balance box */
+  .balance-box {
+    background: linear-gradient(135deg,#d1e7dd 0%,#c3dbd0 100%);
+    border-radius: .75rem; padding: 1rem 1.25rem;
+    border: 1px solid #a3cfbb;
+  }
+  .balance-amount { font-size: 2rem; font-weight: 700; color: #0a3622; line-height: 1; }
+
+  /* Card sections */
+  .section-card { border: 0; box-shadow: 0 1px 8px rgba(0,0,0,.08); border-radius: .75rem; overflow: hidden; }
+  .section-card .card-header { background: #343a40; color: #fff; padding: .75rem 1.25rem; }
+  .section-card .card-header h5 { margin: 0; font-size: 1rem; font-weight: 600; letter-spacing: .02em; }
+  .section-card .card-body { padding: 1.5rem; }
+</style>
+
+
+<form method="post" enctype="multipart/form-data" id="product-form" novalidate>
+  {% csrf_token %}
+
+  <div class="row g-4">
+
+    {# ── LEFT: Product information ─────────────────────────────────────── #}
+    <div class="col-lg-7">
+      <div class="card section-card h-100">
+        <div class="card-header">
+          <h5>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor"
+                 class="bi bi-box-seam me-2 opacity-75" viewBox="0 0 16 16">
+              <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+            </svg>
+            Product Information
+          </h5>
+        </div>
+        <div class="card-body">
+
+          {# Name #}
+          <div class="field-group">
+            <label class="form-label" for="{{ form.name.id_for_label }}">
+              {{ form.name.label }}
+              <span class="text-danger ms-1">*</span>
+            </label>
+            {{ form.name }}
+            {% if form.name.help_text %}
+            <div class="form-text">{{ form.name.help_text }}</div>
+            {% endif %}
+            {% for e in form.name.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+
+          {# Description #}
+          <div class="field-group">
+            <label class="form-label" for="{{ form.description.id_for_label }}">
+              {{ form.description.label }}
+            </label>
+            {{ form.description }}
+            {% for e in form.description.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+
+          {# Brand + Group #}
+          <div class="row g-3 field-group">
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.brand.id_for_label }}">
+                {{ form.brand.label }}
+                <span class="text-danger ms-1">*</span>
+              </label>
+              {{ form.brand }}
+              {% for e in form.brand.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.group.id_for_label }}">
+                {{ form.group.label }}
+                <span class="text-danger ms-1">*</span>
+              </label>
+              {{ form.group }}
+              {% for e in form.group.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+
+          {# Suppliers — iterate BoundWidget items for form-check layout #}
+          <div class="field-group">
+            <label class="form-label">{{ form.suppliers.label }}</label>
+            <div class="border rounded-3 p-3 bg-light" style="max-height:190px;overflow-y:auto;">
+              {% if form.suppliers %}
+              <ul class="supplier-grid">
+                {% for cb in form.suppliers %}
+                <li>
+                  <label>
+                    {{ cb.tag }}
+                    {{ cb.choice_label }}
+                  </label>
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <span class="text-muted small">No suppliers registered yet.</span>
+              {% endif %}
+            </div>
+            {% for e in form.suppliers.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+
+          {# Active switch #}
+          <div class="field-group mb-0">
+            <div class="form-check form-switch">
+              {{ form.is_active }}
+              <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">
+                {{ form.is_active.label }}
+              </label>
+            </div>
+            {% if form.is_active.help_text %}
+            <div class="form-text ms-4">{{ form.is_active.help_text }}</div>
+            {% endif %}
+          </div>
+
+        </div>{# /card-body #}
+      </div>
+    </div>
+
+
+    <div class="col-lg-5 d-flex flex-column gap-4">
+
+      <div class="card section-card">
+        <div class="card-header">
+          <h5>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor"
+                 class="bi bi-image me-2 opacity-75" viewBox="0 0 16 16">
+              <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+              <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+            </svg>
+            Product Image
+          </h5>
+        </div>
+        <div class="card-body text-center">
+
+          {# Preview area #}
+          <div id="img-wrap">
+            {% if form.instance.image %}
+              <img id="img-preview" src="{{ form.instance.image.url }}" alt="Preview">
+              <div id="img-placeholder" style="display:none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
+                     class="bi bi-image mb-2" viewBox="0 0 16 16">
+                  <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                  <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                </svg>
+                <p class="small mb-0">No image</p>
+              </div>
+            {% else %}
+              <img id="img-preview" src="" alt="Preview" style="display:none">
+              <div id="img-placeholder">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
+                     class="bi bi-image mb-2" viewBox="0 0 16 16">
+                  <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                  <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                </svg>
+                <p class="small mb-0">No image selected</p>
+              </div>
+            {% endif %}
+          </div>
+
+          {# Upload field (ClearableFileInput renders Currently + Clear in edit mode) #}
+          <div class="text-start">
+            <label class="form-label" for="{{ form.image.id_for_label }}">
+              {% if form.instance.image %}Replace image{% else %}Select image{% endif %}
+            </label>
+            {{ form.image }}
+            {% if form.image.help_text %}
+            <div class="form-text">{{ form.image.help_text }}</div>
+            {% endif %}
+            {% for e in form.image.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+
+        </div>
+      </div>{# /image card #}
+
+      {# Pricing + Balance card #}
+      <div class="card section-card">
+        <div class="card-header">
+          <h5>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor"
+                 class="bi bi-currency-dollar me-2 opacity-75" viewBox="0 0 16 16">
+              <path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c2.27-.179 3.678-1.438 3.678-3.3 0-1.59-.947-2.51-2.956-3.028l-.722-.187V3.467c1.122.11 1.879.714 2.07 1.616h1.894c-.166-1.6-1.54-2.748-3.964-2.875V1H7.591v1.233c-1.939.23-3.27 1.472-3.27 3.156 0 1.454.966 2.483 2.661 2.917l.61.162v4.031c-1.149-.17-1.94-.8-2.131-1.718H4zm3.391-3.836c-1.043-.263-1.6-.825-1.6-1.616 0-.944.704-1.641 1.8-1.828v3.495l-.2-.05zm1.591 1.872c1.287.323 1.852.859 1.852 1.769 0 1.097-.826 1.828-2.2 1.939V8.73l.348.087z"/>
+            </svg>
+            Pricing &amp; Stock
+          </h5>
+        </div>
+        <div class="card-body">
+
+          {# Unit price #}
+          <div class="field-group">
+            <label class="form-label" for="{{ form.unit_price.id_for_label }}">
+              {{ form.unit_price.label }}
+              <span class="text-danger ms-1">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text fw-semibold">$</span>
+              {{ form.unit_price }}
+            </div>
+            {% if form.unit_price.help_text %}
+            <div class="form-text">{{ form.unit_price.help_text }}</div>
+            {% endif %}
+            {% for e in form.unit_price.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+
+          {# Discount #}
+          <div class="field-group">
+            <label class="form-label" for="{{ form.discount.id_for_label }}">
+              {{ form.discount.label }}
+            </label>
+            <div class="input-group">
+              {{ form.discount }}
+              <span class="input-group-text fw-semibold">%</span>
+            </div>
+            {% if form.discount.help_text %}
+            <div class="form-text">{{ form.discount.help_text }}</div>
+            {% endif %}
+            {% for e in form.discount.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+
+          {# Stock #}
+          <div class="field-group">
+            <label class="form-label" for="{{ form.stock.id_for_label }}">
+              {{ form.stock.label }}
+              <span class="text-danger ms-1">*</span>
+            </label>
+            {{ form.stock }}
+            {% if form.stock.help_text %}
+            <div class="form-text">{{ form.stock.help_text }}</div>
+            {% endif %}
+            {% for e in form.stock.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+
+          {# Applies IVA switch #}
+          <div class="field-group">
+            <div class="form-check form-switch">
+              {{ form.applies_iva }}
+              <label class="form-check-label fw-semibold" for="{{ form.applies_iva.id_for_label }}">
+                {{ form.applies_iva.label }}
+              </label>
+            </div>
+            {% for e in form.applies_iva.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          </div>
+
+          {# Balance (read-only, live-calculated) #}
+          <div class="balance-box">
+            <p class="text-uppercase fw-semibold mb-1"
+               style="font-size:.7rem;letter-spacing:.08em;color:#0a3622;opacity:.7;">
+              Inventory Balance
+            </p>
+            <div class="balance-amount" id="balance-display">$0.00</div>
+            <p class="mb-0 mt-1" style="font-size:.78rem;color:#0a3622;opacity:.6;">
+              Unit Price &times; Stock
+            </p>
+          </div>
+
+        </div>
+      </div>{# /pricing card #}
+
+    </div>{# /right col #}
+  </div>{# /row #}
+
+  {# ── Actions ──────────────────────────────────────────────────────────── #}
+  <div class="d-flex gap-2 mt-4 justify-content-end">
+    <a href="{% url 'billing:product_list' %}" class="btn btn-outline-secondary px-4">
+      Cancel
+    </a>
+    <button type="submit" class="btn btn-primary btn-lg px-5">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+           class="bi bi-check-lg me-1" viewBox="0 0 16 16">
+        <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+      </svg>
+      {% if form.instance.pk %}Save Changes{% else %}Create Product{% endif %}
+    </button>
+  </div>
+
+</form>
+
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Image preview ─────────────────────────────────────────────────────
+  const imgInput       = document.getElementById('id_image');
+  const imgPreview     = document.getElementById('img-preview');
+  const imgPlaceholder = document.getElementById('img-placeholder');
+
+  function showPreview(src) {
+    imgPreview.src = src;
+    imgPreview.style.display = 'block';
+    imgPlaceholder.style.display = 'none';
+  }
+
+  function showPlaceholder() {
+    imgPreview.style.display = 'none';
+    imgPlaceholder.style.display = 'block';
+  }
+
+  if (imgInput) {
+    imgInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (ev) { showPreview(ev.target.result); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Clear checkbox (edit mode) — id set by Django's ClearableFileInput
+  const clearCb = document.getElementById('image-clear_id');
+  if (clearCb) {
+    // Store original src so we can restore if user un-checks
+    const originalSrc = imgPreview ? imgPreview.src : '';
+    clearCb.addEventListener('change', function () {
+      if (this.checked) {
+        showPlaceholder();
+        if (imgInput) imgInput.value = '';
+      } else {
+        if (originalSrc) showPreview(originalSrc);
+      }
+    });
+  }
+
+  // ── Balance calculation ───────────────────────────────────────────────
+  const priceInput   = document.getElementById('id_unit_price');
+  const stockInput   = document.getElementById('id_stock');
+  const balanceEl    = document.getElementById('balance-display');
+
+  function updateBalance() {
+    const price  = parseFloat(priceInput  ? priceInput.value  : 0) || 0;
+    const stock  = parseInt(stockInput ? stockInput.value : 0, 10) || 0;
+    const result = price * stock;
+    if (balanceEl) {
+      balanceEl.textContent = '$' + result.toLocaleString('en-US', {
+        minimumFractionDigits: 2, maximumFractionDigits: 2
+      });
+    }
+  }
+
+  if (priceInput) priceInput.addEventListener('input', updateBalance);
+  if (stockInput) stockInput.addEventListener('input', updateBalance);
+  updateBalance();  // initialize on page load
+
+})();
+</script>
+
+{% endblock %}

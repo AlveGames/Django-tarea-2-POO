@@ -1,0 +1,80 @@
+{% extends 'billing/base.html' %}
+{% block title %}Cuotas - Factura #{{ factura.pk }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h2 class="mb-0">Cuotas de la Factura</h2>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="?format=pdf" class="btn btn-outline-danger" title="Exportar a PDF">
+      <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+    </a>
+    <a href="?format=xlsx" class="btn btn-outline-success" title="Exportar a Excel">
+      <i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel
+    </a>
+    <a href="{% url 'creditos_ventas:factura_detail' factura.pk %}" class="btn btn-outline-dark">
+      <i class="bi bi-printer"></i> Ver Factura / Imprimir
+    </a>
+  </div>
+</div>
+
+<div class="card mb-4 shadow-sm">
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-4"><strong>Número:</strong> #{{ factura.pk }}</div>
+      <div class="col-md-4"><strong>Cliente:</strong> {{ factura.customer }}</div>
+      <div class="col-md-4"><strong>Total:</strong> ${{ factura.total }}</div>
+    </div>
+    <hr>
+    <div class="d-flex justify-content-between mb-1">
+      <span>Progreso de pago</span>
+      <span>{{ cuotas_pagadas }} de {{ total_cuotas }} cuotas pagadas</span>
+    </div>
+    <div class="progress" role="progressbar" aria-valuenow="{{ progreso_pct }}" aria-valuemin="0" aria-valuemax="100">
+      <div class="progress-bar bg-success" style="width: {{ progreso_pct }}%;">{{ progreso_pct }}%</div>
+    </div>
+  </div>
+</div>
+
+<table class="table table-striped table-hover align-middle">
+  <thead class="table-dark">
+    <tr>
+      <th>Número</th>
+      <th>Fecha Vencimiento</th>
+      <th class="text-end">Valor</th>
+      <th class="text-end">Saldo</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for cuota in cuotas %}
+    <tr>
+      <td>{{ cuota.numero }}</td>
+      <td>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</td>
+      <td class="text-end">${{ cuota.valor }}</td>
+      <td class="text-end">${{ cuota.saldo }}</td>
+      <td>
+        {% if cuota.estado == 'PAGADA' %}
+          <span class="badge bg-success">PAGADA</span>
+        {% else %}
+          <span class="badge bg-warning text-dark">PENDIENTE</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if cuota.estado != 'PAGADA' %}
+        <a href="{% url 'creditos_ventas:registrar_pago' cuota.pk %}" class="btn btn-sm btn-primary" title="Registrar Pago">
+          <i class="bi bi-cash-coin"></i> Pagar
+        </a>
+        {% endif %}
+        <a href="{% url 'creditos_ventas:historial_pagos' cuota.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver Historial">
+          <i class="bi bi-clock-history"></i> Historial
+        </a>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6" class="text-center">Esta factura no tiene cuotas generadas.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<a href="{% url 'creditos_ventas:factura_list' %}" class="btn btn-secondary">Volver a Facturas</a>
+{% endblock %}

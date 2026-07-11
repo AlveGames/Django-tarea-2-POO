@@ -1,0 +1,100 @@
+{% extends 'billing/base.html' %}
+{% load static %}
+{% block title %}Carrito{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h2 class="mb-0">Mi Carrito</h2>
+  <a href="{% url 'shop:catalog' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Seguir comprando
+  </a>
+</div>
+
+{% if items %}
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>Producto</th>
+        <th>Precio unitario</th>
+        <th style="width:140px;">Cantidad</th>
+        <th>Subtotal</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td class="d-flex align-items-center gap-2">
+          {% if item.image %}
+            <img src="{{ item.image }}" alt="{{ item.name }}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
+          {% else %}
+            <img src="{% static 'img/no-image.png' %}" alt="Sin imagen" style="width:48px;height:48px;object-fit:cover;border-radius:6px;opacity:.6;">
+          {% endif %}
+          <div>
+            <div class="fw-semibold">{{ item.name }}</div>
+            {% if item.discount|add:"0" > 0 %}
+              <span class="text-decoration-line-through text-muted small">${{ item.original_price }}</span>
+            {% endif %}
+          </div>
+        </td>
+        <td>${{ item.unit_price }}</td>
+        <td>
+          <form method="post" action="{% url 'shop:update_cart' item.product_id %}" class="d-flex gap-1">
+            {% csrf_token %}
+            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control form-control-sm">
+            <button type="submit" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-arrow-repeat"></i>
+            </button>
+          </form>
+        </td>
+        <td class="fw-semibold">${{ item.subtotal }}</td>
+        <td>
+          <form method="post" action="{% url 'shop:remove_from_cart' item.product_id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-danger">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="row justify-content-end">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+          <span>Subtotal</span>
+          <span>${{ subtotal }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span>IVA (15%)</span>
+          <span>${{ iva_amount }}</span>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+          <span>Total</span>
+          <span>${{ total }}</span>
+        </div>
+        <a href="{% url 'shop:checkout' %}" class="btn btn-success w-100">
+          <i class="bi bi-credit-card me-1"></i> Proceder al pago
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-cart-x" style="font-size:3rem;"></i>
+  <p class="mt-3">Tu carrito está vacío.</p>
+  <a href="{% url 'shop:catalog' %}" class="btn btn-primary">Ir al catálogo</a>
+</div>
+{% endif %}
+
+{% endblock %}

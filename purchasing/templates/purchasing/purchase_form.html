@@ -1,0 +1,324 @@
+{% extends 'billing/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-warning text-dark"><h4>{{ title }}</h4></div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-bold">Supplier</label>
+                {{ form.supplier }}
+                {% for error in form.supplier.errors %}
+                <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div id="no-products-msg" class="alert alert-warning d-none">
+                Este proveedor no tiene productos asignados.
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Document Number</label>
+                {{ form.document_number }}
+                {% for error in form.document_number.errors %}
+                <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <h5 class="mt-4 mb-3">Purchase Details</h5>
+            {{ formset.management_form }}
+            <table class="table table-bordered">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Unit Cost</th>
+                        <th>Subtotal</th>
+                        <th class="text-center">Delete</th>
+                    </tr>
+                </thead>
+                <tbody id="formset-rows">
+                {% for detail_form in formset %}
+                <tr class="formset-row">
+                    <td>{{ detail_form.product }}</td>
+                    <td>{{ detail_form.quantity }}</td>
+                    <td>{{ detail_form.unit_cost }}</td>
+                    <td class="text-end row-subtotal">0.00</td>
+                    <td class="text-center">
+                        {{ detail_form.id }}
+                        <button type="button" class="btn btn-danger btn-sm delete-row-btn" title="Eliminar fila">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                    {% for error in detail_form.errors.values %}
+                    <td colspan="5" class="text-danger">{{ error }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <div class="text-end fw-bold fs-5 mb-3">Total: $<span id="grand-total">0.00</span></div>
+            <button type="button" id="add-row-btn" class="btn btn-success mb-3">
+                <i class="bi bi-plus-lg"></i> Agregar Producto
+            </button>
+            <br>
+            <button type="submit" class="btn btn-warning">Create Purchase</button>
+            <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+{# Fila plantilla oculta usada por JS para clonar nuevas filas del formset #}
+<table style="display:none">
+<tbody>
+    <tr id="empty-form-row">
+        <td>{{ formset.empty_form.product }}</td>
+        <td>{{ formset.empty_form.quantity }}</td>
+        <td>{{ formset.empty_form.unit_cost }}</td>
+        <td class="text-end row-subtotal">0.00</td>
+        <td class="text-center">
+            {{ formset.empty_form.id }}
+            <button type="button" class="btn btn-danger btn-sm delete-row-btn" title="Eliminar fila">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    </tr>
+</tbody>
+</table>
+
+{# URL base del endpoint; el 0 se reemplaza con el pk real en JS #}
+<span id="price-url-tpl"
+      data-url="{% url 'billing:product_price' pk=0 %}"
+      style="display:none"></span>
+<span id="products-by-supplier-url-tpl"
+      data-url="{% url 'billing:products_by_supplier' %}"
+      style="display:none"></span>
+
+<script>
+(function () {
+  'use strict';
+
+  const FORM_PREFIX = '{{ formset.prefix }}';
+  const PRICE_FIELD = 'unit_cost';
+
+  const urlTemplate = document.getElementById('price-url-tpl').dataset.url;
+  const productsBySupplierUrl = document.getElementById('products-by-supplier-url-tpl').dataset.url;
+  const totalFormsInput = document.getElementById('id_' + FORM_PREFIX + '-TOTAL_FORMS');
+  const rowsContainer = document.getElementById('formset-rows');
+  const emptyFormRow = document.getElementById('empty-form-row');
+  const addRowBtn = document.getElementById('add-row-btn');
+  const grandTotalEl = document.getElementById('grand-total');
+  const supplierSelect = document.getElementById('{{ form.supplier.id_for_label }}');
+  const noProductsMsg = document.getElementById('no-products-msg');
+
+  let previousSupplierValue = supplierSelect ? supplierSelect.value : '';
+
+  function priceUrl(pk) {
+    // "/products/0/price/" → "/products/42/price/?context=purchase"
+    // context=purchase le indica al endpoint que devuelva unit_price
+    // (precio original) en vez de final_price (precio de venta con descuento).
+    return urlTemplate.replace('/0/', '/' + pk + '/') + '?context=purchase';
+  }
+
+  function buildProductOptions(products) {
+    const fragment = document.createDocumentFragment();
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = '---------';
+    fragment.appendChild(placeholder);
+
+    products.forEach(function (product) {
+      const option = document.createElement('option');
+      option.value = product.id;
+      option.textContent = product.name;
+      option.dataset.price = product.price;
+      option.dataset.appliesIva = product.applies_iva;
+      fragment.appendChild(option);
+    });
+
+    return fragment;
+  }
+
+  function clearRow(row) {
+    const productSelect = row.querySelector('select[name$="-product"]');
+    const qtyInput = row.querySelector('input[name$="-quantity"]');
+    const priceInput = row.querySelector('input[name$="-' + PRICE_FIELD + '"]');
+
+    if (productSelect) productSelect.value = '';
+    if (qtyInput) qtyInput.value = '';
+    if (priceInput) priceInput.value = '';
+  }
+
+  function updateProductDropdowns(products) {
+    // Filas ya existentes en el formset
+    rowsContainer.querySelectorAll('tr.formset-row').forEach(function (row) {
+      const productSelect = row.querySelector('select[name$="-product"]');
+      if (productSelect) {
+        productSelect.innerHTML = '';
+        productSelect.appendChild(buildProductOptions(products));
+      }
+      clearRow(row);
+    });
+
+    // Plantilla oculta usada para clonar filas nuevas
+    const emptyProductSelect = emptyFormRow.querySelector('select[name$="-product"]');
+    if (emptyProductSelect) {
+      emptyProductSelect.innerHTML = '';
+      emptyProductSelect.appendChild(buildProductOptions(products));
+    }
+
+    noProductsMsg.classList.toggle('d-none', products.length !== 0);
+    updateGrandTotal();
+  }
+
+  function computeRowSubtotal(row) {
+    const qtyInput = row.querySelector('input[name$="-quantity"]');
+    const priceInput = row.querySelector('input[name$="-' + PRICE_FIELD + '"]');
+    const qty = qtyInput ? parseFloat(qtyInput.value) : 0;
+    const price = priceInput ? parseFloat(priceInput.value) : 0;
+    const subtotal = (isNaN(qty) || isNaN(price)) ? 0 : qty * price;
+
+    const subtotalCell = row.querySelector('.row-subtotal');
+    if (subtotalCell) subtotalCell.textContent = subtotal.toFixed(2);
+
+    return subtotal;
+  }
+
+  function updateGrandTotal() {
+    let total = 0;
+    rowsContainer.querySelectorAll('tr.formset-row').forEach(function (row) {
+      total += computeRowSubtotal(row);
+    });
+    grandTotalEl.textContent = total.toFixed(2);
+  }
+
+  function attachAutoFill(selectEl) {
+    selectEl.addEventListener('change', function () {
+      const pk = this.value;
+      if (!pk) return;
+
+      const row = this.closest('tr.formset-row');
+      if (!row) return;
+
+      const priceInput = row.querySelector('input[name$="-' + PRICE_FIELD + '"]');
+      if (!priceInput) return;
+
+      fetch(priceUrl(pk))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          priceInput.value = data.price;
+          updateGrandTotal();
+        })
+        .catch(function () {});
+    });
+  }
+
+  function attachDelete(row) {
+    const btn = row.querySelector('.delete-row-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      row.remove();
+      renumberRows();
+      updateGrandTotal();
+    });
+  }
+
+  function attachRowListeners(row) {
+    attachDelete(row);
+    const productSelect = row.querySelector('select[name$="-product"]');
+    if (productSelect) attachAutoFill(productSelect);
+  }
+
+  function renumberRows() {
+    const rows = rowsContainer.querySelectorAll('tr.formset-row');
+    const nameRe = new RegExp('^' + FORM_PREFIX + '-\\d+-');
+    const idRe = new RegExp('^id_' + FORM_PREFIX + '-\\d+-');
+
+    rows.forEach(function (row, index) {
+      row.querySelectorAll('input, select, textarea').forEach(function (el) {
+        if (el.name) el.name = el.name.replace(nameRe, FORM_PREFIX + '-' + index + '-');
+        if (el.id) el.id = el.id.replace(idRe, 'id_' + FORM_PREFIX + '-' + index + '-');
+      });
+    });
+
+    totalFormsInput.value = rows.length;
+  }
+
+  function addRow() {
+    const index = rowsContainer.querySelectorAll('tr.formset-row').length;
+    const html = emptyFormRow.innerHTML
+      .split('__prefix__').join(index);
+
+    const newRow = document.createElement('tr');
+    newRow.className = 'formset-row';
+    newRow.innerHTML = html;
+
+    rowsContainer.appendChild(newRow);
+    totalFormsInput.value = index + 1;
+    attachRowListeners(newRow);
+    updateGrandTotal();
+  }
+
+  rowsContainer.querySelectorAll('tr.formset-row').forEach(attachRowListeners);
+  addRowBtn.addEventListener('click', addRow);
+
+  // Recalcula subtotal/total en vivo al editar cantidad o precio, sin recargar la página
+  rowsContainer.addEventListener('input', function (e) {
+    if (e.target.matches('input[name$="-quantity"], input[name$="-' + PRICE_FIELD + '"]')) {
+      updateGrandTotal();
+    }
+  });
+
+  function hasLoadedProductData() {
+    return Array.from(rowsContainer.querySelectorAll('tr.formset-row')).some(function (row) {
+      const productSelect = row.querySelector('select[name$="-product"]');
+      const qtyInput = row.querySelector('input[name$="-quantity"]');
+      const priceInput = row.querySelector('input[name$="-' + PRICE_FIELD + '"]');
+      return (productSelect && productSelect.value) ||
+             (qtyInput && qtyInput.value) ||
+             (priceInput && priceInput.value);
+    });
+  }
+
+  function loadProductsForSupplier(newValue) {
+    previousSupplierValue = newValue;
+
+    if (!newValue) {
+      updateProductDropdowns([]);
+      noProductsMsg.classList.add('d-none');
+      return;
+    }
+
+    fetch(productsBySupplierUrl + '?supplier_id=' + encodeURIComponent(newValue))
+      .then(function (r) { return r.json(); })
+      .then(function (products) {
+        updateProductDropdowns(products);
+      })
+      .catch(function () {});
+  }
+
+  // Al cambiar el proveedor principal, confirmar solo si ya había un proveedor
+  // seleccionado y hay filas del formset con datos cargados; de lo contrario,
+  // cargar los productos directamente sin pedir confirmación.
+  if (supplierSelect) {
+    supplierSelect.addEventListener('change', function () {
+      const newValue = this.value;
+
+      if (previousSupplierValue && hasLoadedProductData()) {
+        const confirmed = window.confirm(
+          '⚠️ Si cambias el proveedor se eliminarán los productos agregados. ¿Deseas continuar?'
+        );
+
+        if (!confirmed) {
+          this.value = previousSupplierValue;
+          return;
+        }
+      }
+
+      loadProductsForSupplier(newValue);
+    });
+  }
+
+  updateGrandTotal();
+})();
+</script>
+{% endblock %}
