@@ -8,6 +8,10 @@
       <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
+        <div class="alert alert-info small">
+          <i class="bi bi-info-circle me-1"></i>
+          Si no seleccionas ningún rol, el usuario tendrá acceso solo al catálogo como Cliente.
+        </div>
         <button type="submit" class="btn btn-primary">Guardar</button>
         <a href="{% url 'security:user_list' %}" class="btn btn-secondary">Cancelar</a>
       </form>

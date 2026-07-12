@@ -36,16 +36,13 @@ MODULOS = {
     },
 }
 
-# Acciones mostradas en la grilla de cada módulo. 'export'/'print' no tienen
-# permiso real de Django detrás (no existen esos codenames) por lo que se
-# muestran deshabilitadas: son reservadas para una futura extensión.
+# Acciones mostradas en la grilla de cada módulo: las 4 acciones reales
+# de Django (view/add/change/delete). No hay permisos de exportar/imprimir.
 ACCIONES = [
     ('view', 'Ver'),
     ('add', 'Crear'),
     ('change', 'Editar'),
     ('delete', 'Eliminar'),
-    ('export', 'Exportar'),
-    ('print', 'Imprimir'),
 ]
 
 
@@ -161,6 +158,14 @@ class UserUpdateView(AdminOnlyMixin, UpdateView):
     form_class = UserUpdateForm
     template_name = 'security/user_form.html'
     success_url = reverse_lazy('security:user_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Si el usuario se queda sin ningún rol, asignar Cliente
+        if not self.object.groups.exists():
+            grupo_cliente, _ = Group.objects.get_or_create(name='Cliente')
+            self.object.groups.add(grupo_cliente)
+        return response
 
 class UserDeleteView(AdminOnlyMixin, DeleteView):
     model = User

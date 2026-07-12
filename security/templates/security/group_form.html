@@ -54,8 +54,8 @@
 
   .accion-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: .6rem .75rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .6rem .5rem;
   }
   .accion-check {
     display: flex;
@@ -64,7 +64,6 @@
     margin: 0;
     font-size: .9rem;
   }
-  .accion-check.is-disabled { opacity: .4; }
 </style>
 
 <h2 class="mb-4">{% if object %}Editar Rol: {{ object.name }}{% else %}Nuevo Rol{% endif %}</h2>
@@ -127,18 +126,12 @@
             <div class="modulo-card-body" id="body-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
               <div class="accion-grid">
                 {% for accion in sub.acciones %}
-                {% if accion.permission %}
                 <label class="accion-check">
                   <input type="checkbox" class="form-check-input permiso-check"
                          name="permissions" value="{{ accion.permission.id }}"
                          {% if accion.checked %}checked{% endif %}>
                   {{ accion.label }}
                 </label>
-                {% else %}
-                <span class="accion-check is-disabled" title="No disponible todavía">
-                  <i class="bi bi-dash-circle"></i> {{ accion.label }}
-                </span>
-                {% endif %}
                 {% endfor %}
               </div>
             </div>
