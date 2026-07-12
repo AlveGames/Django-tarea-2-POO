@@ -1,27 +1,214 @@
 {% extends 'billing/base.html' %}
-{% block title %}Rol{% endblock %}
+{% load static %}
+{% block title %}{% if object %}Editar Rol{% else %}Nuevo Rol{% endif %}{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-8">
-    <h2>Rol</h2>
-    <div class="form-container">
-      <form method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-          <label class="form-label fw-bold">Nombre del rol</label>
-          {{ form.name }}
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Permisos</label>
-          <!-- Lista con scroll para que no ocupe toda la página -->
-          <div class="border rounded p-2" style="max-height:300px; overflow-y:auto;">
-            {{ form.permissions }}
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="{% url 'security:group_list' %}" class="btn btn-secondary">Cancelar</a>
-      </form>
+<style>
+  .roles-panel {
+    background: #1a1a2e;
+    border-radius: .75rem;
+    padding: 1rem;
+  }
+  .roles-panel h6 {
+    color: #9ca3af;
+    text-transform: uppercase;
+    font-size: .72rem;
+    letter-spacing: .06em;
+    padding: 0 .4rem;
+  }
+  .role-link {
+    display: block;
+    padding: .6rem .9rem;
+    border-radius: .4rem;
+    color: #cbd5e1;
+    text-decoration: none;
+    margin-bottom: .3rem;
+    transition: background .15s ease;
+  }
+  .role-link:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+  .role-link.active { background: #2563eb; color: #fff; font-weight: 600; }
+
+  .categoria-title {
+    font-weight: 700;
+    margin: 1.5rem 0 .75rem;
+    color: #343a40;
+  }
+  .categoria-title:first-of-type { margin-top: 0; }
+
+  .modulo-card {
+    border: 1px solid #dee2e6;
+    border-radius: .6rem;
+    overflow: hidden;
+    height: 100%;
+  }
+  .modulo-card-header {
+    background: #1a3a5c;
+    color: #fff;
+    padding: .65rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modulo-card-header .form-check-input { cursor: pointer; }
+  .modulo-card-body { padding: .9rem 1rem; background: #fff; }
+
+  .accion-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .6rem .75rem;
+  }
+  .accion-check {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    font-size: .9rem;
+  }
+  .accion-check.is-disabled { opacity: .4; }
+</style>
+
+<h2 class="mb-4">{% if object %}Editar Rol: {{ object.name }}{% else %}Nuevo Rol{% endif %}</h2>
+
+<div class="row g-4">
+  <div class="col-lg-3">
+    <div class="roles-panel">
+      <h6 class="mb-2">Roles</h6>
+      <a href="{% url 'security:group_create' %}" class="role-link {% if not object %}active{% endif %}">
+        <i class="bi bi-plus-circle me-1"></i> Nuevo Rol
+      </a>
+      <hr style="border-color: rgba(255,255,255,.15);">
+      {% for g in all_groups %}
+      <a href="{% url 'security:group_update' g.pk %}" class="role-link {% if object and object.pk == g.pk %}active{% endif %}">
+        <i class="bi bi-shield-lock me-1"></i> {{ g.name }}
+      </a>
+      {% empty %}
+      <p class="text-secondary small px-2">Aún no hay roles.</p>
+      {% endfor %}
     </div>
   </div>
+
+  <div class="col-lg-9">
+    <form method="post" id="groupForm">
+      {% csrf_token %}
+
+      <div class="mb-4" style="max-width: 420px;">
+        <label class="form-label fw-bold">Nombre del rol</label>
+        {{ form.name }}
+        {% for error in form.name.errors %}
+        <div class="text-danger small"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      {# Preserva permisos que el rol ya tenía fuera de esta matriz visual #}
+      {% for perm_id in extra_permission_ids %}
+      <input type="hidden" name="permissions" value="{{ perm_id }}">
+      {% endfor %}
+
+      {% for categoria in modulos %}
+      <div class="categoria-title">{{ categoria.name }}</div>
+      <div class="row g-3 mb-2">
+        {% for sub in categoria.submodulos %}
+        <div class="col-md-6 col-xl-4">
+          <div class="modulo-card">
+            <div class="modulo-card-header modulo-tooltip"
+                 data-bs-toggle="tooltip"
+                 data-bs-placement="top"
+                 data-active="{{ sub.active_count }}"
+                 data-total="{{ sub.total_count }}"
+                 title="{{ sub.active_count }} de {{ sub.total_count }} permisos activos">
+              <span>{{ sub.name }}</span>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input modulo-master" type="checkbox"
+                       data-target="body-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"
+                       {% if sub.total_count > 0 and sub.active_count == sub.total_count %}checked{% endif %}
+                       title="Seleccionar todos">
+              </div>
+            </div>
+            <div class="modulo-card-body" id="body-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+              <div class="accion-grid">
+                {% for accion in sub.acciones %}
+                {% if accion.permission %}
+                <label class="accion-check">
+                  <input type="checkbox" class="form-check-input permiso-check"
+                         name="permissions" value="{{ accion.permission.id }}"
+                         {% if accion.checked %}checked{% endif %}>
+                  {{ accion.label }}
+                </label>
+                {% else %}
+                <span class="accion-check is-disabled" title="No disponible todavía">
+                  <i class="bi bi-dash-circle"></i> {{ accion.label }}
+                </span>
+                {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Guardar</button>
+        <a href="{% url 'security:group_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function countChecked(body) {
+    var boxes = body.querySelectorAll('.permiso-check');
+    var checked = body.querySelectorAll('.permiso-check:checked');
+    return { checked: checked.length, total: boxes.length };
+  }
+
+  function refreshTooltip(header, checked, total) {
+    var text = checked + ' de ' + total + ' permisos activos';
+    header.setAttribute('data-active', checked);
+    header.setAttribute('title', text);
+    var tooltip = bootstrap.Tooltip.getInstance(header);
+    if (tooltip) {
+      tooltip.setContent({ '.tooltip-inner': text });
+    } else {
+      header.setAttribute('data-bs-original-title', text);
+    }
+  }
+
+  // Inicializa tooltips de Bootstrap
+  document.querySelectorAll('.modulo-tooltip').forEach(function (header) {
+    new bootstrap.Tooltip(header);
+  });
+
+  // Checkbox maestro por módulo: marca/desmarca todos sus permisos
+  document.querySelectorAll('.modulo-master').forEach(function (master) {
+    var body = document.getElementById(master.dataset.target);
+    if (!body) return;
+
+    var state = countChecked(body);
+    master.indeterminate = state.checked > 0 && state.checked < state.total;
+
+    master.addEventListener('change', function () {
+      body.querySelectorAll('.permiso-check').forEach(function (cb) {
+        cb.checked = master.checked;
+      });
+      master.indeterminate = false;
+      var header = master.closest('.modulo-card-header');
+      var s = countChecked(body);
+      refreshTooltip(header, s.checked, s.total);
+    });
+
+    body.querySelectorAll('.permiso-check').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var s = countChecked(body);
+        master.checked = s.total > 0 && s.checked === s.total;
+        master.indeterminate = s.checked > 0 && s.checked < s.total;
+        var header = master.closest('.modulo-card-header');
+        refreshTooltip(header, s.checked, s.total);
+      });
+    });
+  });
+});
+</script>
 {% endblock %}

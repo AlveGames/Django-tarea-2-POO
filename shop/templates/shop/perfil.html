@@ -1,0 +1,145 @@
+{% extends 'shop/base_shop.html' %}
+{% load static %}
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<style>
+  .perfil-card {
+    border: none;
+    border-radius: .75rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+  }
+  .avatar-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #1a0050;
+    background: #e9ecef;
+  }
+  .avatar-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0D0D0D, #1a0050);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+  }
+  #perfilForm input[type="text"],
+  #perfilForm textarea {
+    width: 100%;
+    padding: .55rem .85rem;
+    border: 1px solid #ced4da;
+    border-radius: .4rem;
+    font-size: 1rem;
+  }
+  #perfilForm input[type="text"]:focus,
+  #perfilForm textarea:focus {
+    outline: none;
+    border-color: #1a0050;
+    box-shadow: 0 0 0 .2rem rgba(26, 0, 80, .15);
+  }
+</style>
+
+<h2 class="mb-4">Mi Perfil</h2>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card perfil-card">
+      <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data" id="perfilForm">
+          {% csrf_token %}
+
+          <div class="d-flex align-items-center gap-4 mb-4">
+            {% if object.avatar %}
+            <img src="{{ object.avatar.url }}" alt="Avatar" class="avatar-preview" id="avatarPreview">
+            {% else %}
+            <div class="avatar-placeholder" id="avatarPlaceholder">
+              <i class="bi bi-person-fill"></i>
+            </div>
+            <img src="" alt="Avatar" class="avatar-preview d-none" id="avatarPreview">
+            {% endif %}
+
+            <div>
+              <label class="form-label fw-semibold d-block mb-1">Foto de perfil</label>
+              {{ form.avatar }}
+              {% for error in form.avatar.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+              <div class="form-text">Usuario: <strong>{{ user.username }}</strong> &middot; {{ user.email }}</div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Nombre</label>
+              {{ form.first_name }}
+              {% for error in form.first_name.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Apellido</label>
+              {{ form.last_name }}
+              {% for error in form.last_name.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Teléfono</label>
+              {{ form.phone }}
+              {% for error in form.phone.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">DNI</label>
+              {{ form.dni }}
+              {% for error in form.dni.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Dirección</label>
+              {{ form.address }}
+              {% for error in form.address.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check2-circle me-1"></i> Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var input = document.querySelector('#perfilForm input[type="file"]');
+  var preview = document.getElementById('avatarPreview');
+  var placeholder = document.getElementById('avatarPlaceholder');
+  if (!input || !preview) return;
+
+  input.addEventListener('change', function () {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      preview.src = e.target.result;
+      preview.classList.remove('d-none');
+      if (placeholder) placeholder.classList.add('d-none');
+    };
+    reader.readAsDataURL(file);
+  });
+});
+</script>
+{% endblock %}

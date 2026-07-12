@@ -54,8 +54,15 @@
             </a>
           </li>
           {% endif %}
-          <li class="nav-item text-light small mb-2 mb-lg-0 d-flex align-items-center">
-            <i class="bi bi-person-circle me-1"></i> {{ user.first_name|default:user.username }}
+          <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-1 {% if request.resolver_match.url_name == 'perfil' %}active{% endif %}" href="{% url 'shop:perfil' %}">
+              {% if user.perfil.avatar %}
+              <img src="{{ user.perfil.avatar.url }}" alt="Avatar" class="rounded-circle" style="width: 24px; height: 24px; object-fit: cover;">
+              {% else %}
+              <i class="bi bi-person-circle"></i>
+              {% endif %}
+              {{ user.first_name|default:user.username }}
+            </a>
           </li>
           <li class="nav-item">
             <form method="post" action="{% url 'security:logout' %}" class="d-inline">

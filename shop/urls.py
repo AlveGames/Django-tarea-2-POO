@@ -14,4 +14,5 @@ urlpatterns = [
     path('checkout/process/', views.process_payment, name='process_payment'),
     path('orders/', views.MisOrdenesView.as_view(), name='mis_ordenes'),
     path('orders/<int:pk>/receipt/', views.OrderReceiptView.as_view(), name='receipt'),
+    path('perfil/', views.PerfilView.as_view(), name='perfil'),
 ]

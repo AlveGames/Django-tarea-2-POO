@@ -13,6 +13,96 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from shared.mixins import GroupRequiredMixin
 from .forms import UserRegisterForm, UserUpdateForm, GroupForm, PermissionForm
 
+# === MATRIZ DE PERMISOS POR MÓDULO (pantalla visual de roles) ===
+MODULOS = {
+    'Gestión': {
+        'Marcas': ['view_brand', 'add_brand', 'change_brand', 'delete_brand'],
+        'Grupos': ['view_productgroup', 'add_productgroup', 'change_productgroup', 'delete_productgroup'],
+        'Proveedores': ['view_supplier', 'add_supplier', 'change_supplier', 'delete_supplier'],
+        'Productos': ['view_product', 'add_product', 'change_product', 'delete_product'],
+    },
+    'Ventas': {
+        'Clientes': ['view_customer', 'add_customer', 'change_customer', 'delete_customer'],
+        'Facturas': ['view_invoice', 'add_invoice', 'change_invoice', 'delete_invoice'],
+        'Créditos Ventas': ['view_cuotaventa', 'add_cuotaventa', 'change_cuotaventa', 'delete_cuotaventa'],
+    },
+    'Compras': {
+        'Compras': ['view_purchase', 'add_purchase', 'change_purchase', 'delete_purchase'],
+        'Créditos Compras': ['view_cuotacompra', 'add_cuotacompra', 'change_cuotacompra', 'delete_cuotacompra'],
+    },
+    'Seguridad': {
+        'Usuarios': ['view_user', 'add_user', 'change_user', 'delete_user'],
+        'Roles': ['view_group', 'add_group', 'change_group', 'delete_group'],
+    },
+}
+
+# Acciones mostradas en la grilla de cada módulo. 'export'/'print' no tienen
+# permiso real de Django detrás (no existen esos codenames) por lo que se
+# muestran deshabilitadas: son reservadas para una futura extensión.
+ACCIONES = [
+    ('view', 'Ver'),
+    ('add', 'Crear'),
+    ('change', 'Editar'),
+    ('delete', 'Eliminar'),
+    ('export', 'Exportar'),
+    ('print', 'Imprimir'),
+]
+
+
+def build_permissions_matrix(group=None):
+    """Arma la matriz de módulos/submódulos con los Permission reales de Django
+    y marca cuáles están activos para el rol dado (ninguno si es creación).
+
+    También devuelve los ids de permisos que el rol ya tenía pero que no
+    forman parte de la matriz visual, para preservarlos como inputs ocultos
+    y que guardar el formulario no se los quite silenciosamente.
+    """
+    all_codenames = {
+        codename
+        for submodulos in MODULOS.values()
+        for codenames in submodulos.values()
+        for codename in codenames
+    }
+    perms_by_codename = {
+        p.codename: p for p in Permission.objects.filter(codename__in=all_codenames)
+    }
+
+    active_ids = set(group.permissions.values_list('id', flat=True)) if group else set()
+
+    modulos_ctx = []
+    for modulo_name, submodulos in MODULOS.items():
+        submodulos_ctx = []
+        for submodulo_name, codenames in submodulos.items():
+            acciones_ctx = []
+            active_count = 0
+            total_count = 0
+            for prefix, label in ACCIONES:
+                codename = next((c for c in codenames if c.startswith(prefix + '_')), None)
+                perm = perms_by_codename.get(codename) if codename else None
+                checked = bool(perm and perm.id in active_ids)
+                if perm:
+                    total_count += 1
+                if checked:
+                    active_count += 1
+                acciones_ctx.append({
+                    'label': label,
+                    'permission': perm,
+                    'checked': checked,
+                })
+            submodulos_ctx.append({
+                'name': submodulo_name,
+                'acciones': acciones_ctx,
+                'active_count': active_count,
+                'total_count': total_count,
+            })
+        modulos_ctx.append({'name': modulo_name, 'submodulos': submodulos_ctx})
+
+    covered_ids = {p.id for p in perms_by_codename.values()}
+    extra_ids = active_ids - covered_ids
+
+    return modulos_ctx, extra_ids
+
+
 # === MIXIN BASE: SOLO ADMINISTRADOR ===
 class AdminOnlyMixin(LoginRequiredMixin, GroupRequiredMixin):
     """Combina login + rol Administrador (el superusuario siempre pasa)."""
@@ -89,11 +179,23 @@ class GroupCreateView(AdminOnlyMixin, CreateView):
     template_name = 'security/group_form.html'
     success_url = reverse_lazy('security:group_list')
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['all_groups'] = Group.objects.order_by('name')
+        ctx['modulos'], ctx['extra_permission_ids'] = build_permissions_matrix(None)
+        return ctx
+
 class GroupUpdateView(AdminOnlyMixin, UpdateView):
     model = Group
     form_class = GroupForm
     template_name = 'security/group_form.html'
     success_url = reverse_lazy('security:group_list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['all_groups'] = Group.objects.order_by('name')
+        ctx['modulos'], ctx['extra_permission_ids'] = build_permissions_matrix(self.object)
+        return ctx
 
 class GroupDeleteView(AdminOnlyMixin, DeleteView):
     model = Group

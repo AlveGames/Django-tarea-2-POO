@@ -5,14 +5,15 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.generic import DetailView, ListView, TemplateView
+from django.urls import reverse_lazy
+from django.views.generic import DetailView, ListView, TemplateView, UpdateView
 
 from billing.models import Customer, Invoice, InvoiceDetail, Product, ProductGroup
 from billing.views import send_invoice_email
 from shared.decorators import group_required
 from shared.mixins import GroupRequiredMixin
 from .forms import CheckoutForm
-from .models import ShopOrder, ShopOrderDetail
+from .models import PerfilCliente, ShopOrder, ShopOrderDetail
 
 IVA_RATE = Decimal('0.15')
 
@@ -214,13 +215,25 @@ class CheckoutView(GroupRequiredMixin, TemplateView):
             return redirect('shop:catalog')
         return super().get(request, *args, **kwargs)
 
+    def get_initial(self):
+        initial = {}
+        initial['full_name'] = self.request.user.get_full_name()
+        initial['email'] = self.request.user.email
+        try:
+            perfil = self.request.user.perfil
+            if perfil.first_name or perfil.last_name:
+                initial['full_name'] = f'{perfil.first_name} {perfil.last_name}'.strip()
+            initial['phone'] = perfil.phone
+            initial['address'] = perfil.address
+            initial['dni'] = perfil.dni
+        except PerfilCliente.DoesNotExist:
+            pass
+        return initial
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if 'form' not in context:
-            context['form'] = CheckoutForm(initial={
-                'full_name': self.request.user.get_full_name(),
-                'email': self.request.user.email,
-            })
+            context['form'] = CheckoutForm(initial=self.get_initial())
         context.update(_cart_totals(_get_cart(self.request)))
         return context
 
@@ -338,3 +351,18 @@ class MisOrdenesView(LoginRequiredMixin, ListView):
         return ShopOrder.objects.filter(
             user=self.request.user
         ).prefetch_related('details__product').order_by('-created_at')
+
+
+class PerfilView(LoginRequiredMixin, UpdateView):
+    """Edición del perfil del cliente logueado (datos + avatar)."""
+    model = PerfilCliente
+    fields = ['first_name', 'last_name', 'phone', 'address', 'dni', 'avatar']
+    template_name = 'shop/perfil.html'
+    success_url = reverse_lazy('shop:perfil')
+
+    def get_object(self):
+        return self.request.user.perfil
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Perfil actualizado correctamente.')
+        return super().form_valid(form)
