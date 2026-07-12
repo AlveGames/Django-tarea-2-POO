@@ -1,27 +1,27 @@
 {% extends 'billing/base.html' %}
-{% block title %}Purchase #{{ purchase.id }}{% endblock %}
+{% block title %}Compra #{{ purchase.id }}{% endblock %}
 {% block content %}
 <div class="card shadow mb-4">
     <div class="card-header bg-dark text-white">
-        <h4>Purchase #{{ purchase.id }}</h4>
+        <h4>Compra #{{ purchase.id }}</h4>
     </div>
     <div class="card-body">
         <div class="row mb-3">
             <div class="col-md-6">
-                <p><strong>Supplier:</strong> {{ purchase.supplier }}</p>
-                <p><strong>Document No.:</strong> {{ purchase.document_number }}</p>
+                <p><strong>Proveedor:</strong> {{ purchase.supplier }}</p>
+                <p><strong>N° Documento:</strong> {{ purchase.document_number }}</p>
             </div>
             <div class="col-md-6 text-end">
-                <p><strong>Date:</strong> {{ purchase.purchase_date|date:"d/m/Y H:i" }}</p>
-                <p><strong>Purchase #:</strong> {{ purchase.id }}</p>
+                <p><strong>Fecha:</strong> {{ purchase.purchase_date|date:"d/m/Y H:i" }}</p>
+                <p><strong>Compra #:</strong> {{ purchase.id }}</p>
             </div>
         </div>
         <table class="table table-bordered">
             <thead class="table-dark">
                 <tr>
-                    <th>Product</th>
-                    <th class="text-center">Qty</th>
-                    <th class="text-end">Unit Cost</th>
+                    <th>Producto</th>
+                    <th class="text-center">Cant.</th>
+                    <th class="text-end">Costo Unitario</th>
                     <th class="text-end">Subtotal</th>
                 </tr>
             </thead>
@@ -50,8 +50,8 @@
                 </tr>
             </tfoot>
         </table>
-        <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary">Back to list</a>
-        <a href="{% url 'purchasing:purchase_delete' purchase.pk %}" class="btn btn-danger">Delete</a>
+        <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary">Volver a la lista</a>
+        <a href="{% url 'purchasing:purchase_delete' purchase.pk %}" class="btn btn-danger">Eliminar</a>
     </div>
 </div>
 {% endblock %}

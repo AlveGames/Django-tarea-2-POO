@@ -1,12 +1,13 @@
 {% extends 'billing/base.html' %}
-{% block title %}Users{% endblock %}
+{% block title %}Usuarios{% endblock %}
 {% block content %}
-<h2>Users</h2>
+<h2>Usuarios</h2>
+<div class="table-container">
 <table class="table table-striped table-hover">
   <thead class="table-dark">
     <tr>
-      <th>Username</th><th>Name</th><th>Email</th>
-      <th>Roles</th><th>Active</th><th>Actions</th>
+      <th>Usuario</th><th>Nombre</th><th>Email</th>
+      <th>Roles</th><th>Activo</th><th>Acciones</th>
     </tr>
   </thead>
   <tbody>
@@ -19,16 +20,17 @@
         {% for g in u.groups.all %}
           <span class="badge bg-info">{{ g.name }}</span>
         {% empty %}
-          <span class="badge bg-secondary">No role</span>
+          <span class="badge bg-secondary">Sin rol</span>
         {% endfor %}
       </td>
       <td>{% if u.is_active %}✔{% else %}✘{% endif %}</td>
       <td>
-        <a href="{% url 'security:user_update' u.pk %}" class="btn btn-sm btn-warning">Edit</a>
-        <a href="{% url 'security:user_delete' u.pk %}" class="btn btn-sm btn-danger">Delete</a>
+        <a href="{% url 'security:user_update' u.pk %}" class="btn btn-sm btn-warning">Editar</a>
+        <a href="{% url 'security:user_delete' u.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
       </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

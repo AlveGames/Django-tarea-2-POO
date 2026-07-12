@@ -1,16 +1,17 @@
 {% extends 'billing/base.html' %}
-{% block title %}Invoices{% endblock %}
+{% block title %}Facturas{% endblock %}
 {% block content %}
-<h2>Invoices</h2>
-<a href="{% url 'billing:invoice_create' %}" class="btn btn-primary mb-3">+ New Invoice</a>
+<h2>Facturas</h2>
+<a href="{% url 'billing:invoice_create' %}" class="btn btn-primary mb-3">+ Nueva Factura</a>
+<div class="table-container">
 <table class="table table-striped table-hover">
     <thead class="table-dark">
         <tr>
-            <th>#</th><th>Customer</th><th>Date</th>
+            <th>#</th><th>Cliente</th><th>Fecha</th>
             <th class="text-end">Subtotal</th>
-            <th class="text-end">Tax</th>
+            <th class="text-end">IVA</th>
             <th class="text-end">Total</th>
-            <th>Actions</th>
+            <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
@@ -23,15 +24,16 @@
         <td class="text-end">${{ inv.tax }}</td>
         <td class="text-end fw-bold">${{ inv.total }}</td>
         <td>
-            <a href="{% url 'billing:invoice_detail' inv.pk %}" class="btn btn-sm btn-info">View</a>
-            <a href="{% url 'billing:invoice_delete' inv.pk %}" class="btn btn-sm btn-danger">Delete</a>
+            <a href="{% url 'billing:invoice_detail' inv.pk %}" class="btn btn-sm btn-info">Ver</a>
+            <a href="{% url 'billing:invoice_delete' inv.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
         </td>
     </tr>
     {% empty %}
-    <tr><td colspan="7" class="text-center">No invoices yet.</td></tr>
+    <tr><td colspan="7" class="text-center">Aún no hay facturas.</td></tr>
     {% endfor %}
     </tbody>
 </table>
+</div>
 
 {% if is_paginated %}
 <nav class="mt-3">

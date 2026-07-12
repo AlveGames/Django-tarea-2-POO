@@ -17,45 +17,44 @@
   <i class="bi bi-calendar-event"></i> Cuotas Pendientes
 </a>
 
-<div class="card mb-4 shadow-sm">
-  <div class="card-body">
-    <form method="get" class="row g-3 align-items-end">
-      <div class="col-md-2">
-        <label class="form-label">Proveedor</label>
-        <input type="text" name="proveedor" value="{{ filters.proveedor }}" class="form-control" placeholder="Nombre del proveedor">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Tipo Pago</label>
-        <select name="tipo_pago" class="form-select">
-          <option value="">Todos</option>
-          <option value="CONTADO" {% if filters.tipo_pago == 'CONTADO' %}selected{% endif %}>CONTADO</option>
-          <option value="CREDITO" {% if filters.tipo_pago == 'CREDITO' %}selected{% endif %}>CREDITO</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Estado</label>
-        <select name="estado" class="form-select">
-          <option value="">Todos</option>
-          <option value="PENDIENTE" {% if filters.estado == 'PENDIENTE' %}selected{% endif %}>PENDIENTE</option>
-          <option value="PAGADA" {% if filters.estado == 'PAGADA' %}selected{% endif %}>PAGADA</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Desde</label>
-        <input type="date" name="fecha_desde" value="{{ filters.fecha_desde }}" class="form-control">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Hasta</label>
-        <input type="date" name="fecha_hasta" value="{{ filters.fecha_hasta }}" class="form-control">
-      </div>
-      <div class="col-md-2 d-flex gap-2">
-        <button type="submit" class="btn btn-primary flex-fill">Filtrar</button>
-        <a href="{% url 'creditos_compras:compra_list' %}" class="btn btn-secondary flex-fill">Limpiar</a>
-      </div>
-    </form>
-  </div>
+<div class="filter-container">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-2">
+      <label class="form-label">Proveedor</label>
+      <input type="text" name="proveedor" value="{{ filters.proveedor }}" class="form-control" placeholder="Nombre del proveedor">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Tipo Pago</label>
+      <select name="tipo_pago" class="form-select">
+        <option value="">Todos</option>
+        <option value="CONTADO" {% if filters.tipo_pago == 'CONTADO' %}selected{% endif %}>CONTADO</option>
+        <option value="CREDITO" {% if filters.tipo_pago == 'CREDITO' %}selected{% endif %}>CREDITO</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Estado</label>
+      <select name="estado" class="form-select">
+        <option value="">Todos</option>
+        <option value="PENDIENTE" {% if filters.estado == 'PENDIENTE' %}selected{% endif %}>PENDIENTE</option>
+        <option value="PAGADA" {% if filters.estado == 'PAGADA' %}selected{% endif %}>PAGADA</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Desde</label>
+      <input type="date" name="fecha_desde" value="{{ filters.fecha_desde }}" class="form-control">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Hasta</label>
+      <input type="date" name="fecha_hasta" value="{{ filters.fecha_hasta }}" class="form-control">
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-primary flex-fill">Filtrar</button>
+      <a href="{% url 'creditos_compras:compra_list' %}" class="btn btn-secondary flex-fill">Limpiar</a>
+    </div>
+  </form>
 </div>
 
+<div class="table-container">
 <table class="table table-striped table-hover align-middle">
   <thead class="table-dark">
     <tr>
@@ -113,6 +112,7 @@
   {% endfor %}
   </tbody>
 </table>
+</div>
 
 {% if is_paginated %}
 <nav class="mt-3">

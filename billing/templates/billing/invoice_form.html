@@ -7,23 +7,23 @@
         <form method="post">
             {% csrf_token %}
             <div class="mb-3">
-                <label class="form-label fw-bold">Customer</label>
+                <label class="form-label fw-bold">Cliente</label>
                 {{ form.customer }}
                 {% for error in form.customer.errors %}
                 <div class="text-danger">{{ error }}</div>
                 {% endfor %}
             </div>
-            <h5 class="mt-4 mb-3">Invoice Details</h5>
+            <h5 class="mt-4 mb-3">Detalle de la Factura</h5>
             {{ formset.management_form }}
             <table class="table table-bordered">
                 <thead class="table-secondary">
                     <tr>
-                        <th>Product</th>
-                        <th>Quantity</th>
-                        <th>Unit Price</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
                         <th class="text-center">Aplica IVA</th>
                         <th>Subtotal</th>
-                        <th class="text-center">Delete</th>
+                        <th class="text-center">Eliminar</th>
                     </tr>
                 </thead>
                 <tbody id="formset-rows">
@@ -75,8 +75,8 @@
                 <i class="bi bi-plus-lg"></i> Agregar Producto
             </button>
             <br>
-            <button type="submit" class="btn btn-warning">Create Invoice</button>
-            <a href="{% url 'billing:invoice_list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-warning">Crear Factura</button>
+            <a href="{% url 'billing:invoice_list' %}" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
 </div>

@@ -36,6 +36,7 @@
 
 <form id="pagoMultipleForm" method="post" action="{% url 'creditos_compras:pagar_multiple' compra.pk %}">
   {% csrf_token %}
+  <div class="table-container">
   <table class="table table-striped table-hover align-middle">
     <thead class="table-dark">
       <tr>
@@ -83,6 +84,7 @@
     {% endfor %}
     </tbody>
   </table>
+  </div>
 </form>
 
 {% if is_paginated %}

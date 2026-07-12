@@ -14,6 +14,7 @@
   </div>
 </div>
 
+<div class="table-container">
 <table class="table table-striped table-hover align-middle">
   <thead class="table-dark">
     <tr>
@@ -34,6 +35,7 @@
   {% endfor %}
   </tbody>
 </table>
+</div>
 
 <a href="{% url 'creditos_compras:cuota_list' cuota.compra.pk %}" class="btn btn-secondary">Volver a Cuotas</a>
 {% endblock %}

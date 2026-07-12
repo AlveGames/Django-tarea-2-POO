@@ -15,6 +15,7 @@ from .forms import SignUpForm, BrandForm, ProductForm, InvoiceForm, InvoiceDetai
 from shared.mixins import StaffRequiredMixin, ExportMixin
 from shared.decorators import audit_action
 from decimal import Decimal
+from purchasing.models import Purchase
 
 # === HOME ===
 @login_required
@@ -24,6 +25,8 @@ def home(request):
         'total_products': Product.objects.count(),
         'total_customers': Customer.objects.count(),
         'total_invoices': Invoice.objects.count(),
+        'total_purchases': Purchase.objects.count(),
+        'creditos_ventas_pendientes': Invoice.objects.filter(tipo_pago='CREDITO', estado='PENDIENTE').count(),
         'recent_invoices': Invoice.objects.all()[:5],
         'low_stock': Product.objects.filter(stock__lte=5, is_active=True),
     }

@@ -1,27 +1,27 @@
 {% extends 'billing/base.html' %}
-{% block title %}Invoice #{{ invoice.id }}{% endblock %}
+{% block title %}Factura #{{ invoice.id }}{% endblock %}
 {% block content %}
 <div class="card shadow mb-4">
     <div class="card-header bg-dark text-white">
-        <h4>Invoice #{{ invoice.id }}</h4>
+        <h4>Factura #{{ invoice.id }}</h4>
     </div>
     <div class="card-body">
         <div class="row mb-3">
             <div class="col-md-6">
-                <p><strong>Customer:</strong> {{ invoice.customer.full_name }}</p>
+                <p><strong>Cliente:</strong> {{ invoice.customer.full_name }}</p>
                 <p><strong>DNI/RUC:</strong> {{ invoice.customer.dni }}</p>
             </div>
             <div class="col-md-6 text-end">
-                <p><strong>Date:</strong> {{ invoice.invoice_date|date:"d/m/Y H:i" }}</p>
-                <p><strong>Invoice #:</strong> {{ invoice.id }}</p>
+                <p><strong>Fecha:</strong> {{ invoice.invoice_date|date:"d/m/Y H:i" }}</p>
+                <p><strong>Factura #:</strong> {{ invoice.id }}</p>
             </div>
         </div>
         <table class="table table-bordered">
             <thead class="table-dark">
                 <tr>
-                    <th>Product</th>
-                    <th class="text-center">Qty</th>
-                    <th class="text-end">Unit Price</th>
+                    <th>Producto</th>
+                    <th class="text-center">Cant.</th>
+                    <th class="text-end">Precio Unit.</th>
                     <th class="text-center">Aplica IVA</th>
                     <th class="text-end">Subtotal</th>
                 </tr>
@@ -56,8 +56,8 @@
                 </tr>
             </tfoot>
         </table>
-        <a href="{% url 'billing:invoice_list' %}" class="btn btn-secondary">Back to list</a>
-        <a href="{% url 'billing:invoice_delete' invoice.pk %}" class="btn btn-danger">Delete</a>
+        <a href="{% url 'billing:invoice_list' %}" class="btn btn-secondary">Volver a la lista</a>
+        <a href="{% url 'billing:invoice_delete' invoice.pk %}" class="btn btn-danger">Eliminar</a>
     </div>
 </div>
 {% endblock %}

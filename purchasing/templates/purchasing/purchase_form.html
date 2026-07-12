@@ -7,7 +7,7 @@
         <form method="post">
             {% csrf_token %}
             <div class="mb-3">
-                <label class="form-label fw-bold">Supplier</label>
+                <label class="form-label fw-bold">Proveedor</label>
                 {{ form.supplier }}
                 {% for error in form.supplier.errors %}
                 <div class="text-danger">{{ error }}</div>
@@ -17,22 +17,22 @@
                 Este proveedor no tiene productos asignados.
             </div>
             <div class="mb-3">
-                <label class="form-label fw-bold">Document Number</label>
+                <label class="form-label fw-bold">Número de Documento</label>
                 {{ form.document_number }}
                 {% for error in form.document_number.errors %}
                 <div class="text-danger">{{ error }}</div>
                 {% endfor %}
             </div>
-            <h5 class="mt-4 mb-3">Purchase Details</h5>
+            <h5 class="mt-4 mb-3">Detalle de la Compra</h5>
             {{ formset.management_form }}
             <table class="table table-bordered">
                 <thead class="table-secondary">
                     <tr>
-                        <th>Product</th>
-                        <th>Quantity</th>
-                        <th>Unit Cost</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Costo Unitario</th>
                         <th>Subtotal</th>
-                        <th class="text-center">Delete</th>
+                        <th class="text-center">Eliminar</th>
                     </tr>
                 </thead>
                 <tbody id="formset-rows">
@@ -60,8 +60,8 @@
                 <i class="bi bi-plus-lg"></i> Agregar Producto
             </button>
             <br>
-            <button type="submit" class="btn btn-warning">Create Purchase</button>
-            <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-warning">Crear Compra</button>
+            <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
 </div>
