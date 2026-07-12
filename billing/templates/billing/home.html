@@ -1,12 +1,13 @@
 {% extends 'billing/base.html' %}
+{% load i18n %}
 {% block title %}Inicio - TecnoStock{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
+{% block page_title %}{% trans "Dashboard" %}{% endblock %}
 {% block content %}
 
 <div class="p-4 mb-4 bg-light rounded-3">
-    <h1 class="h3 mb-1">Bienvenido, {{ user.first_name|default:user.username }}!</h1>
+    <h1 class="h3 mb-1">{% blocktrans with name=user.first_name|default:user.username %}Bienvenido, {{ name }}!{% endblocktrans %}</h1>
     <p class="text-muted mb-1"><i class="bi bi-calendar3 me-1"></i>{{ today_display }}</p>
-    <p class="lead mb-0">Sistema de Ventas y Facturación — Ecuador</p>
+    <p class="lead mb-0">{% trans "Sistema de Ventas y Facturación — Ecuador" %}</p>
 </div>
 
 <div class="row mb-4 g-3">
@@ -15,8 +16,8 @@
             <div class="card-body">
                 <div class="stat-icon-badge"><i class="bi bi-tags"></i></div>
                 <h2 class="stat-number">{{ total_brands }}</h2>
-                <p class="stat-label">Marcas</p>
-                <a href="{% url 'billing:brand_list' %}" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
+                <p class="stat-label">{% trans "Marcas" %}</p>
+                <a href="{% url 'billing:brand_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
@@ -25,8 +26,8 @@
             <div class="card-body">
                 <div class="stat-icon-badge"><i class="bi bi-box-seam"></i></div>
                 <h2 class="stat-number">{{ total_products }}</h2>
-                <p class="stat-label">Productos</p>
-                <a href="{% url 'billing:product_list' %}" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
+                <p class="stat-label">{% trans "Productos" %}</p>
+                <a href="{% url 'billing:product_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
@@ -35,8 +36,8 @@
             <div class="card-body">
                 <div class="stat-icon-badge"><i class="bi bi-people"></i></div>
                 <h2 class="stat-number">{{ total_customers }}</h2>
-                <p class="stat-label">Clientes</p>
-                <a href="{% url 'billing:customer_list' %}" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
+                <p class="stat-label">{% trans "Clientes" %}</p>
+                <a href="{% url 'billing:customer_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
@@ -45,8 +46,8 @@
             <div class="card-body">
                 <div class="stat-icon-badge"><i class="bi bi-receipt"></i></div>
                 <h2 class="stat-number">{{ total_invoices }}</h2>
-                <p class="stat-label">Facturas</p>
-                <a href="{% url 'billing:invoice_list' %}" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
+                <p class="stat-label">{% trans "Facturas" %}</p>
+                <a href="{% url 'billing:invoice_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
@@ -55,8 +56,8 @@
             <div class="card-body">
                 <div class="stat-icon-badge"><i class="bi bi-cart-check"></i></div>
                 <h2 class="stat-number">{{ total_purchases }}</h2>
-                <p class="stat-label">Compras</p>
-                <a href="{% url 'purchasing:purchase_list' %}" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
+                <p class="stat-label">{% trans "Compras" %}</p>
+                <a href="{% url 'purchasing:purchase_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
@@ -65,8 +66,8 @@
             <div class="card-body">
                 <div class="stat-icon-badge"><i class="bi bi-exclamation-circle"></i></div>
                 <h2 class="stat-number">{{ creditos_ventas_pendientes }}</h2>
-                <p class="stat-label stat-label-sm">Créd. Ventas Pend.</p>
-                <a href="{% url 'creditos_ventas:factura_list' %}?estado=PENDIENTE" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
+                <p class="stat-label stat-label-sm">{% trans "Créd. Ventas Pend." %}</p>
+                <a href="{% url 'creditos_ventas:factura_list' %}?estado=PENDIENTE" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
@@ -75,10 +76,10 @@
 <div class="row">
     <div class="col-md-7">
         <div class="card">
-            <div class="card-header bg-dark text-white"><h5 class="mb-0">Facturas Recientes</h5></div>
+            <div class="card-header bg-dark text-white"><h5 class="mb-0">{% trans "Facturas Recientes" %}</h5></div>
             <div class="card-body">
                 <table class="table table-sm align-middle">
-                    <thead><tr><th>#</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th></tr></thead>
+                    <thead><tr><th>#</th><th>{% trans "Cliente" %}</th><th>{% trans "Fecha" %}</th><th>{% trans "Total" %}</th><th>{% trans "Estado" %}</th></tr></thead>
                     <tbody>
                     {% for inv in recent_invoices %}
                     <tr>
@@ -88,14 +89,14 @@
                         <td>${{ inv.total }}</td>
                         <td>
                             {% if inv.estado == 'PAGADA' %}
-                            <span class="badge bg-success">PAGADA</span>
+                            <span class="badge bg-success">{% trans "PAGADA" %}</span>
                             {% else %}
-                            <span class="badge bg-warning text-dark">PENDIENTE</span>
+                            <span class="badge bg-warning text-dark">{% trans "PENDIENTE" %}</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="5" class="text-center">Aún no hay facturas.</td></tr>
+                    <tr><td colspan="5" class="text-center">{% trans "Aún no hay facturas." %}</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -106,11 +107,11 @@
         <div class="card border-danger">
             <div class="card-header bg-danger text-white d-flex align-items-center gap-2">
                 <i class="bi bi-exclamation-triangle-fill"></i>
-                <h5 class="mb-0">Alerta de Stock Bajo</h5>
+                <h5 class="mb-0">{% trans "Alerta de Stock Bajo" %}</h5>
             </div>
             <div class="card-body">
                 <table class="table table-sm align-middle">
-                    <thead><tr><th>Producto</th><th>Stock</th></tr></thead>
+                    <thead><tr><th>{% trans "Producto" %}</th><th>Stock</th></tr></thead>
                     <tbody>
                     {% for p in low_stock %}
                     <tr>
@@ -118,7 +119,7 @@
                         <td><span class="badge bg-danger rounded-pill pulse-badge">{{ p.stock }}</span></td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="2" class="text-center text-success">Todos los productos tienen stock.</td></tr>
+                    <tr><td colspan="2" class="text-center text-success">{% trans "Todos los productos tienen stock." %}</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -130,7 +131,7 @@
 <div class="row mt-4">
     <div class="col-md-7">
         <div class="card">
-            <div class="card-header bg-white"><h5 class="mb-0">Ventas — Últimos 7 días</h5></div>
+            <div class="card-header bg-white"><h5 class="mb-0">{% trans "Ventas — Últimos 7 días" %}</h5></div>
             <div class="card-body">
                 <canvas id="ventasChart" height="140"></canvas>
             </div>
@@ -138,13 +139,13 @@
     </div>
     <div class="col-md-5">
         <div class="card">
-            <div class="card-header bg-white"><h5 class="mb-0">Resumen General</h5></div>
+            <div class="card-header bg-white"><h5 class="mb-0">{% trans "Resumen General" %}</h5></div>
             <div class="card-body">
                 <div class="chart-donut-wrap">
                     <canvas id="resumenChart"></canvas>
                     <div class="chart-donut-total">
                         <div class="chart-donut-total-value">{{ total_invoices|add:total_purchases|add:total_products|add:total_customers|add:total_brands }}</div>
-                        <div class="chart-donut-total-label">Total</div>
+                        <div class="chart-donut-total-label">{% trans "Total" %}</div>
                     </div>
                 </div>
             </div>

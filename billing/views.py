@@ -13,6 +13,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from .models import *
 from .forms import SignUpForm, BrandForm, ProductForm, InvoiceForm, InvoiceDetailFormSet
 from shared.mixins import StaffRequiredMixin, ExportMixin
@@ -58,7 +59,7 @@ def home(request):
         'today_display': today_display,
         'ventas_labels': ventas_labels,
         'ventas_data': ventas_data,
-        'resumen_labels': ['Facturas', 'Compras', 'Productos', 'Clientes', 'Marcas'],
+        'resumen_labels': [_('Facturas'), _('Compras'), _('Productos'), _('Clientes'), _('Marcas')],
         'resumen_data': [total_invoices, total_purchases, total_products, total_customers, total_brands],
     }
     return render(request, 'billing/home.html', context)

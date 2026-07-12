@@ -1,8 +1,10 @@
 {% load security_tags %}
 {% load static %}
+{% load i18n %}
+{% get_current_language as CURRENT_LANGUAGE %}
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ CURRENT_LANGUAGE }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,12 +43,12 @@
     <ul class="sidebar-menu">
       <li>
         <a class="sidebar-link {% if request.path == '/' %}active{% endif %}" href="{% url 'billing:home' %}">
-          <i class="bi bi-house-door"></i><span>Inicio</span>
+          <i class="bi bi-house-door"></i><span>{% trans "Inicio" %}</span>
         </a>
       </li>
       <li>
         <a class="sidebar-link {% if request.path == catalog_url %}active{% endif %}" href="{{ catalog_url }}">
-          <i class="bi bi-shop"></i><span>Catálogo</span>
+          <i class="bi bi-shop"></i><span>{% trans "Catálogo" %}</span>
         </a>
       </li>
 
@@ -55,13 +57,13 @@
         {% if user|has_group:'Analista de Compras' or user|has_group:'Administrador' %}
         <li class="sidebar-group">
           <a class="sidebar-link sidebar-toggle {% if '/brands/' in request.path or '/groups/' in request.path or '/suppliers/' in request.path or '/products/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuGestion" aria-expanded="{% if '/brands/' in request.path or '/groups/' in request.path or '/suppliers/' in request.path or '/products/' in request.path %}true{% else %}false{% endif %}">
-            <i class="bi bi-box-seam"></i><span>Gestión</span><i class="bi bi-chevron-down sidebar-caret"></i>
+            <i class="bi bi-box-seam"></i><span>{% trans "Gestión" %}</span><i class="bi bi-chevron-down sidebar-caret"></i>
           </a>
           <ul class="collapse sidebar-submenu {% if '/brands/' in request.path or '/groups/' in request.path or '/suppliers/' in request.path or '/products/' in request.path %}show{% endif %}" id="menuGestion">
-            <li><a class="sidebar-sublink {% if request.path == brand_list_url %}active{% endif %}" href="{{ brand_list_url }}">Marcas</a></li>
-            <li><a class="sidebar-sublink {% if request.path == productgroup_list_url %}active{% endif %}" href="{{ productgroup_list_url }}">Grupos</a></li>
-            <li><a class="sidebar-sublink {% if request.path == supplier_list_url %}active{% endif %}" href="{{ supplier_list_url }}">Proveedores</a></li>
-            <li><a class="sidebar-sublink {% if request.path == product_list_url %}active{% endif %}" href="{{ product_list_url }}">Productos</a></li>
+            <li><a class="sidebar-sublink {% if request.path == brand_list_url %}active{% endif %}" href="{{ brand_list_url }}">{% trans "Marcas" %}</a></li>
+            <li><a class="sidebar-sublink {% if request.path == productgroup_list_url %}active{% endif %}" href="{{ productgroup_list_url }}">{% trans "Grupos" %}</a></li>
+            <li><a class="sidebar-sublink {% if request.path == supplier_list_url %}active{% endif %}" href="{{ supplier_list_url }}">{% trans "Proveedores" %}</a></li>
+            <li><a class="sidebar-sublink {% if request.path == product_list_url %}active{% endif %}" href="{{ product_list_url }}">{% trans "Productos" %}</a></li>
           </ul>
         </li>
         {% endif %}
@@ -69,11 +71,11 @@
         {% if user|has_group:'Vendedor' or user|has_group:'Administrador' %}
         <li class="sidebar-group">
           <a class="sidebar-link sidebar-toggle {% if '/customers/' in request.path or '/invoices/' in request.path or '/creditos-ventas/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuVentas" aria-expanded="{% if '/customers/' in request.path or '/invoices/' in request.path or '/creditos-ventas/' in request.path %}true{% else %}false{% endif %}">
-            <i class="bi bi-cash-coin"></i><span>Ventas</span><i class="bi bi-chevron-down sidebar-caret"></i>
+            <i class="bi bi-cash-coin"></i><span>{% trans "Ventas" %}</span><i class="bi bi-chevron-down sidebar-caret"></i>
           </a>
           <ul class="collapse sidebar-submenu {% if '/customers/' in request.path or '/invoices/' in request.path or '/creditos-ventas/' in request.path %}show{% endif %}" id="menuVentas">
-            <li><a class="sidebar-sublink {% if request.path == customer_list_url %}active{% endif %}" href="{{ customer_list_url }}">Clientes</a></li>
-            <li><a class="sidebar-sublink {% if request.path == invoice_list_url %}active{% endif %}" href="{{ invoice_list_url }}">Facturas</a></li>
+            <li><a class="sidebar-sublink {% if request.path == customer_list_url %}active{% endif %}" href="{{ customer_list_url }}">{% trans "Clientes" %}</a></li>
+            <li><a class="sidebar-sublink {% if request.path == invoice_list_url %}active{% endif %}" href="{{ invoice_list_url }}">{% trans "Facturas" %}</a></li>
             <li><a class="sidebar-sublink {% if request.path == factura_list_url %}active{% endif %}" href="{{ factura_list_url }}">Créditos Ventas</a></li>
           </ul>
         </li>
@@ -82,10 +84,10 @@
         {% if user|has_group:'Analista de Compras' or user|has_group:'Administrador' %}
         <li class="sidebar-group">
           <a class="sidebar-link sidebar-toggle {% if '/purchases/' in request.path or '/creditos-compras/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuCompras" aria-expanded="{% if '/purchases/' in request.path or '/creditos-compras/' in request.path %}true{% else %}false{% endif %}">
-            <i class="bi bi-cart3"></i><span>Compras</span><i class="bi bi-chevron-down sidebar-caret"></i>
+            <i class="bi bi-cart3"></i><span>{% trans "Compras" %}</span><i class="bi bi-chevron-down sidebar-caret"></i>
           </a>
           <ul class="collapse sidebar-submenu {% if '/purchases/' in request.path or '/creditos-compras/' in request.path %}show{% endif %}" id="menuCompras">
-            <li><a class="sidebar-sublink {% if request.path == purchase_list_url %}active{% endif %}" href="{{ purchase_list_url }}">Compras</a></li>
+            <li><a class="sidebar-sublink {% if request.path == purchase_list_url %}active{% endif %}" href="{{ purchase_list_url }}">{% trans "Compras" %}</a></li>
             <li><a class="sidebar-sublink {% if request.path == compra_list_url %}active{% endif %}" href="{{ compra_list_url }}">Créditos Compras</a></li>
           </ul>
         </li>
@@ -94,12 +96,12 @@
         {% if user|has_group:'Administrador' %}
         <li class="sidebar-group">
           <a class="sidebar-link sidebar-toggle {% if '/security/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuSeguridad" aria-expanded="{% if '/security/' in request.path %}true{% else %}false{% endif %}">
-            <i class="bi bi-shield-lock"></i><span>Seguridad</span><i class="bi bi-chevron-down sidebar-caret"></i>
+            <i class="bi bi-shield-lock"></i><span>{% trans "Seguridad" %}</span><i class="bi bi-chevron-down sidebar-caret"></i>
           </a>
           <ul class="collapse sidebar-submenu {% if '/security/' in request.path %}show{% endif %}" id="menuSeguridad">
-            <li><a class="sidebar-sublink {% if request.path == user_list_url %}active{% endif %}" href="{{ user_list_url }}">Usuarios</a></li>
-            <li><a class="sidebar-sublink {% if request.path == group_list_url %}active{% endif %}" href="{{ group_list_url }}">Roles</a></li>
-            <li><a class="sidebar-sublink {% if request.path == permission_list_url %}active{% endif %}" href="{{ permission_list_url }}">Permisos</a></li>
+            <li><a class="sidebar-sublink {% if request.path == user_list_url %}active{% endif %}" href="{{ user_list_url }}">{% trans "Usuarios" %}</a></li>
+            <li><a class="sidebar-sublink {% if request.path == group_list_url %}active{% endif %}" href="{{ group_list_url }}">{% trans "Roles" %}</a></li>
+            <li><a class="sidebar-sublink {% if request.path == permission_list_url %}active{% endif %}" href="{{ permission_list_url }}">{% trans "Permisos" %}</a></li>
           </ul>
         </li>
         {% endif %}
@@ -135,7 +137,7 @@
     <form method="post" action="{% url 'logout' %}">
       {% csrf_token %}
       <button type="submit" class="sidebar-logout-btn">
-        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+        <i class="bi bi-box-arrow-right"></i> {% trans "Cerrar Sesión" %}
       </button>
     </form>
     {% else %}
@@ -153,10 +155,14 @@
         <button class="topbar-icon-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Idioma">
           <i class="bi bi-translate"></i>
         </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item active" href="#">🇪🇨 Español</a></li>
-          <li><a class="dropdown-item" href="#">🇬🇧 English</a></li>
-        </ul>
+        <div class="dropdown-menu dropdown-menu-end p-2">
+          <form action="{% url 'set_language' %}" method="post">
+            {% csrf_token %}
+            <input name="next" type="hidden" value="{{ request.path }}">
+            <button name="language" value="es" type="submit" class="dropdown-item {% if CURRENT_LANGUAGE == 'es' %}active{% endif %}">🇪🇨 Español</button>
+            <button name="language" value="en" type="submit" class="dropdown-item {% if CURRENT_LANGUAGE == 'en' %}active{% endif %}">🇬🇧 English</button>
+          </form>
+        </div>
       </div>
       <button type="button" class="topbar-icon-btn position-relative" title="Notificaciones">
         <i class="bi bi-bell"></i>

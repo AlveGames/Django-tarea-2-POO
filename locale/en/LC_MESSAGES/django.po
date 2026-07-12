@@ -1,0 +1,156 @@
+# TecnoStock - English translations.
+# Copyright (C) 2026
+# This file is distributed under the same license as the TecnoStock package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TecnoStock 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-12 00:00+0000\n"
+"PO-Revision-Date: 2026-07-12 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. === Sidebar (billing/templates/billing/base.html) ===
+#: billing/templates/billing/base.html:46
+msgid "Inicio"
+msgstr "Home"
+
+#: billing/templates/billing/base.html:51
+msgid "Catálogo"
+msgstr "Catalog"
+
+#: billing/templates/billing/base.html:60
+msgid "Gestión"
+msgstr "Management"
+
+#: billing/templates/billing/base.html:63
+msgid "Marcas"
+msgstr "Brands"
+
+#: billing/templates/billing/base.html:64
+msgid "Grupos"
+msgstr "Groups"
+
+#: billing/templates/billing/base.html:65
+msgid "Proveedores"
+msgstr "Suppliers"
+
+#: billing/templates/billing/base.html:66
+msgid "Productos"
+msgstr "Products"
+
+#: billing/templates/billing/base.html:74
+msgid "Ventas"
+msgstr "Sales"
+
+#: billing/templates/billing/base.html:77
+msgid "Clientes"
+msgstr "Customers"
+
+#: billing/templates/billing/base.html:78
+msgid "Facturas"
+msgstr "Invoices"
+
+#: billing/templates/billing/base.html:87 billing/templates/billing/base.html:90
+msgid "Compras"
+msgstr "Purchases"
+
+#: billing/templates/billing/base.html:99
+msgid "Seguridad"
+msgstr "Security"
+
+#: billing/templates/billing/base.html:102
+msgid "Usuarios"
+msgstr "Users"
+
+#: billing/templates/billing/base.html:103
+msgid "Roles"
+msgstr "Roles"
+
+#: billing/templates/billing/base.html:104
+msgid "Permisos"
+msgstr "Permissions"
+
+#: billing/templates/billing/base.html:140
+msgid "Cerrar Sesión"
+msgstr "Log Out"
+
+#. === Dashboard (billing/templates/billing/home.html) ===
+#: billing/templates/billing/home.html:4
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: billing/templates/billing/home.html:8
+#, python-format
+msgid "Bienvenido, %(name)s!"
+msgstr "Welcome, %(name)s!"
+
+#: billing/templates/billing/home.html:10
+msgid "Sistema de Ventas y Facturación — Ecuador"
+msgstr "Sales and Billing System — Ecuador"
+
+#: billing/templates/billing/home.html:20
+msgid "Ver todas"
+msgstr "View all"
+
+#: billing/templates/billing/home.html:69
+msgid "Créd. Ventas Pend."
+msgstr "Pend. Sales Credits"
+
+#: billing/templates/billing/home.html:79
+msgid "Facturas Recientes"
+msgstr "Recent Invoices"
+
+#: billing/templates/billing/home.html:82
+msgid "Cliente"
+msgstr "Customer"
+
+#: billing/templates/billing/home.html:82
+msgid "Fecha"
+msgstr "Date"
+
+#: billing/templates/billing/home.html:82
+msgid "Total"
+msgstr "Total"
+
+#: billing/templates/billing/home.html:82
+msgid "Estado"
+msgstr "Status"
+
+#: billing/templates/billing/home.html:92
+msgid "PAGADA"
+msgstr "PAID"
+
+#: billing/templates/billing/home.html:94
+msgid "PENDIENTE"
+msgstr "PENDING"
+
+#: billing/templates/billing/home.html:99
+msgid "Aún no hay facturas."
+msgstr "No invoices yet."
+
+#: billing/templates/billing/home.html:110
+msgid "Alerta de Stock Bajo"
+msgstr "Low Stock Alert"
+
+#: billing/templates/billing/home.html:114
+msgid "Producto"
+msgstr "Product"
+
+#: billing/templates/billing/home.html:122
+msgid "Todos los productos tienen stock."
+msgstr "All products have stock."
+
+#: billing/templates/billing/home.html:134
+msgid "Ventas — Últimos 7 días"
+msgstr "Sales — Last 7 days"
+
+#: billing/templates/billing/home.html:142
+msgid "Resumen General"
+msgstr "General Summary"
