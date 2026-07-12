@@ -11,7 +11,10 @@ urlpatterns = [
     path('facturas/<int:pk>/delete/', views.FacturaVentaDeleteView.as_view(), name='factura_delete'),
     path('facturas/<int:pk>/cuotas/', views.CuotaVentaListView.as_view(), name='cuota_list'),
     path('facturas/<int:pk>/generar-cuotas/', views.GenerarCuotasView.as_view(), name='generar_cuotas'),
+    path('facturas/<int:pk>/pagar-multiple/', views.PagarMultipleCuotasView.as_view(), name='pagar_multiple'),
+    path('facturas/<int:pk>/recibo-multiple/', views.ReciboMultiplePagosView.as_view(), name='recibo_multiple'),
     path('cuotas/<int:pk>/pagar/', views.RegistrarPagoView.as_view(), name='registrar_pago'),
     path('cuotas/<int:pk>/historial/', views.HistorialPagosView.as_view(), name='historial_pagos'),
     path('cuotas/pendientes/', views.CuotasPendientesView.as_view(), name='cuotas_pendientes'),
+    path('pagos/<int:pk>/recibo/', views.ReciboPagoView.as_view(), name='recibo_pago'),
 ]

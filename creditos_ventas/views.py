@@ -13,7 +13,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 
 from billing.models import Invoice
 from shared.mixins import ExportMixin
-from .forms import FacturaVentaForm, GenerarCuotasForm, PagoCuotaForm
+from .forms import FacturaVentaForm, GenerarCuotasForm, PagoCuotaForm, PagoMultipleCuotasForm
 from .models import CuotaVenta, PagoCuotaVenta
 
 
@@ -33,6 +33,7 @@ class FacturaVentaListView(LoginRequiredMixin, ExportMixin, ListView):
     template_name = 'creditos_ventas/factura_list.html'
     context_object_name = 'facturas'
     export_title = 'Facturas'
+    paginate_by = 10
 
     def get_export_fields(self):
         return [
@@ -299,6 +300,7 @@ class CuotaVentaListView(LoginRequiredMixin, ExportMixin, ListView):
     model = CuotaVenta
     template_name = 'creditos_ventas/cuota_list.html'
     context_object_name = 'cuotas'
+    paginate_by = 10
 
     def get_export_fields(self):
         return [
@@ -329,6 +331,7 @@ class CuotasPendientesView(LoginRequiredMixin, ListView):
     model = CuotaVenta
     template_name = 'creditos_ventas/cuotas_pendientes.html'
     context_object_name = 'cuotas'
+    paginate_by = 10
 
     def get_queryset(self):
         return (
@@ -401,7 +404,41 @@ class RegistrarPagoView(LoginRequiredMixin, CreateView):
         factura.save()
 
         messages.success(self.request, 'Pago registrado correctamente.')
-        return redirect('creditos_ventas:cuota_list', pk=factura.pk)
+        return redirect('creditos_ventas:recibo_pago', pk=pago.pk)
+
+
+class ReciboPagoView(LoginRequiredMixin, DetailView):
+    model = PagoCuotaVenta
+    template_name = 'creditos_ventas/recibo_pago.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pago = self.object
+        context['cuota'] = pago.cuota
+        context['factura'] = pago.cuota.factura
+        return context
+
+
+class ReciboMultiplePagosView(LoginRequiredMixin, View):
+    template_name = 'creditos_ventas/recibo_multiple_pagos.html'
+
+    def get(self, request, pk):
+        factura = get_object_or_404(Invoice, pk=pk)
+        ids = [i for i in request.GET.get('ids', '').split(',') if i]
+        pagos = PagoCuotaVenta.objects.filter(
+            pk__in=ids, cuota__factura=factura
+        ).select_related('cuota').order_by('cuota__numero')
+
+        if not pagos.exists():
+            messages.error(request, 'No se encontraron pagos para mostrar.')
+            return redirect('creditos_ventas:cuota_list', pk=factura.pk)
+
+        total = sum((p.valor for p in pagos), Decimal('0.00'))
+        return render(request, self.template_name, {
+            'factura': factura,
+            'pagos': pagos,
+            'total': total,
+        })
 
 
 class HistorialPagosView(LoginRequiredMixin, ListView):
@@ -417,3 +454,72 @@ class HistorialPagosView(LoginRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx['cuota'] = self.cuota
         return ctx
+
+
+class PagarMultipleCuotasView(LoginRequiredMixin, View):
+    template_name = 'creditos_ventas/pagar_multiple_cuotas.html'
+
+    def get(self, request, pk):
+        return redirect('creditos_ventas:cuota_list', pk=pk)
+
+    def _get_cuotas_seleccionadas(self, request, factura):
+        cuota_ids = request.POST.getlist('cuotas')
+        return CuotaVenta.objects.filter(
+            pk__in=cuota_ids, factura=factura, estado='PENDIENTE'
+        ).order_by('numero')
+
+    def post(self, request, pk):
+        factura = get_object_or_404(Invoice, pk=pk)
+        cuotas = self._get_cuotas_seleccionadas(request, factura)
+
+        if not cuotas.exists():
+            messages.error(request, 'Debe seleccionar al menos una cuota pendiente.')
+            return redirect('creditos_ventas:cuota_list', pk=factura.pk)
+
+        total = sum((c.saldo for c in cuotas), Decimal('0.00'))
+
+        if 'confirmar' not in request.POST:
+            form = PagoMultipleCuotasForm(initial={'fecha': date.today()})
+            return render(request, self.template_name, {
+                'factura': factura,
+                'cuotas': cuotas,
+                'total': total,
+                'form': form,
+            })
+
+        form = PagoMultipleCuotasForm(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {
+                'factura': factura,
+                'cuotas': cuotas,
+                'total': total,
+                'form': form,
+            })
+
+        fecha = form.cleaned_data['fecha']
+        observacion = form.cleaned_data['observacion']
+
+        pagos_creados = []
+        for cuota in cuotas:
+            pago = PagoCuotaVenta.objects.create(
+                cuota=cuota,
+                fecha=fecha,
+                valor=cuota.saldo,
+                observacion=observacion,
+            )
+            pagos_creados.append(pago.pk)
+            cuota.saldo = 0
+            cuota.estado = 'PAGADA'
+            cuota.save()
+
+        if not factura.cuotas.exclude(estado='PAGADA').exists():
+            factura.estado = 'PAGADA'
+            factura.saldo = 0
+        else:
+            factura.saldo = sum((c.saldo for c in factura.cuotas.all()), Decimal('0.00'))
+        factura.save()
+
+        messages.success(request, f'{cuotas.count()} cuota(s) pagadas correctamente.')
+        url = reverse('creditos_ventas:recibo_multiple', kwargs={'pk': factura.pk})
+        ids_str = ','.join(str(pago_pk) for pago_pk in pagos_creados)
+        return redirect(f'{url}?ids={ids_str}')

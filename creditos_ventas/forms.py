@@ -90,3 +90,20 @@ class PagoCuotaForm(forms.ModelForm):
             )
 
         return fecha
+
+
+class PagoMultipleCuotasForm(forms.Form):
+    fecha = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+        input_formats=['%Y-%m-%d'],
+    )
+    observacion = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+    )
+
+    def clean_fecha(self):
+        fecha = self.cleaned_data.get('fecha')
+        if fecha and fecha != date.today():
+            raise forms.ValidationError('La fecha del pago debe ser la fecha de hoy.')
+        return fecha

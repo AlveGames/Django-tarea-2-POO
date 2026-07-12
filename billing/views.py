@@ -1,4 +1,5 @@
 import json
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -338,7 +339,7 @@ class ProductDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
 
 # === CUSTOMER (CBV) ===
 class CustomerListView(LoginRequiredMixin, ListView):
-    model = Customer; template_name = 'billing/customer_list.html'; context_object_name = 'items'
+    model = Customer; template_name = 'billing/customer_list.html'; context_object_name = 'items'; paginate_by = 10
 
 class CustomerCreateView(LoginRequiredMixin, CreateView):
     model = Customer; fields = ['dni','first_name','last_name','email','phone','address','is_active']; template_name = 'billing/customer_form.html'; success_url = reverse_lazy('billing:customer_list')
@@ -353,7 +354,13 @@ class CustomerDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
 @login_required
 def invoice_list(request):
     invoices = Invoice.objects.select_related('customer').all()
-    return render(request, 'billing/invoice_list.html', {'items': invoices})
+    paginator = Paginator(invoices, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'billing/invoice_list.html', {
+        'items': page_obj,
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+    })
 
 @login_required
 def invoice_create(request):
