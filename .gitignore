@@ -9,8 +9,7 @@ media/
 
 # Virtual environment
 venv/
-env/
-.env
+
 
 # IDEs
 .vscode/

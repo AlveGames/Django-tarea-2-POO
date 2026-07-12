@@ -5,6 +5,8 @@ from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.auth.views import LoginView, LogoutView
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
@@ -27,6 +29,16 @@ class RegisterView(CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         login(self.request, self.object)   # inicia sesión automáticamente
+
+        html_message = render_to_string('emails/bienvenida.html', {'username': self.object.username})
+        send_mail(
+            subject='Bienvenido a TecnoStock',
+            message=f'Bienvenido a TecnoStock, {self.object.username}.',
+            from_email=None,
+            recipient_list=[self.object.email],
+            html_message=html_message,
+            fail_silently=True,
+        )
         return response
 
 class SecurityLoginView(LoginView):

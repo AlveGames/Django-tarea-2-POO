@@ -1,10 +1,12 @@
 import json
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.contrib.auth import login
 from django.http import JsonResponse
@@ -409,6 +411,18 @@ def invoice_create(request):
                 invoice.tax = iva_amount
                 invoice.total = invoice.subtotal + invoice.tax
                 invoice.save()
+
+                if invoice.customer.email:
+                    html_message = render_to_string('emails/factura.html', {'invoice': invoice})
+                    send_mail(
+                        subject=f'TecnoStock - Factura #{invoice.id}',
+                        message=f'Adjuntamos el detalle de su factura #{invoice.id}. Total: ${invoice.total}',
+                        from_email=None,
+                        recipient_list=[invoice.customer.email],
+                        html_message=html_message,
+                        fail_silently=True,
+                    )
+
                 messages.success(request, f'Invoice #{invoice.id} created! Total: ${invoice.total}')
                 return redirect('billing:invoice_list')
     else:
