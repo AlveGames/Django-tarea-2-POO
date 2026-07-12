@@ -425,6 +425,26 @@ def invoice_detail(request, pk):
 def invoice_delete(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
     if request.method == 'POST':
+        from creditos_ventas.models import PagoCuotaVenta
+
+        if invoice.estado == 'PAGADA':
+            PagoCuotaVenta.objects.filter(cuota__factura=invoice).delete()
+            invoice.cuotas.all().delete()
+            invoice_id = invoice.id
+            invoice.delete()
+            messages.success(request, f'Invoice #{invoice_id} deleted!')
+            return redirect('billing:invoice_list')
+
+        tiene_pagos = PagoCuotaVenta.objects.filter(
+            cuota__factura=invoice
+        ).exists()
+
+        if tiene_pagos:
+            messages.error(request, 'No se puede eliminar una factura con pagos parciales registrados.')
+            return redirect('billing:invoice_list')
+
+        invoice.cuotas.all().delete()
+
         invoice_id = invoice.id
         invoice.delete()
         messages.success(request, f'Invoice #{invoice_id} deleted!')

@@ -77,6 +77,16 @@ class PagoCuotaForm(forms.ModelForm):
 
     def clean_fecha(self):
         fecha = self.cleaned_data.get('fecha')
-        if fecha and fecha > date.today():
-            raise forms.ValidationError('La fecha del pago no puede ser futura.')
+        if not fecha:
+            return fecha
+
+        hoy = date.today()
+        if fecha < hoy:
+            raise forms.ValidationError('La fecha del pago no puede ser anterior a hoy.')
+
+        if self.cuota and fecha > self.cuota.fecha_vencimiento:
+            raise forms.ValidationError(
+                f'La fecha del pago no puede superar la fecha de vencimiento de la cuota ({self.cuota.fecha_vencimiento}).'
+            )
+
         return fecha

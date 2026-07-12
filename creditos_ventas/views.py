@@ -216,27 +216,30 @@ class FacturaVentaDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'creditos_ventas/factura_confirm_delete.html'
     success_url = reverse_lazy('creditos_ventas:factura_list')
 
-    def dispatch(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if PagoCuotaVenta.objects.filter(cuota__factura=self.object).exists():
-            messages.error(request, 'No se puede eliminar una factura con pagos registrados.')
-            return redirect('creditos_ventas:factura_list')
-        return super().dispatch(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        factura = self.get_object()
-        tiene_pagos = factura.cuotas.filter(pagocuotaventa__isnull=False).exists()
-        if tiene_pagos:
-            messages.error(request, 'No se puede eliminar una factura con pagos registrados.')
-            return redirect('creditos_ventas:factura_list')
-        factura.cuotas.all().delete()
-        return super().delete(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         # Django 6's BaseDeleteView.post() llama a form_valid() -> object.delete()
         # directamente, sin pasar por delete(). Lo redirigimos para que nuestra
         # lógica de borrado en cascada sí se ejecute.
-        return self.delete(request, *args, **kwargs)
+        invoice = self.get_object()
+
+        if invoice.estado == 'PAGADA':
+            PagoCuotaVenta.objects.filter(cuota__factura=invoice).delete()
+            invoice.cuotas.all().delete()
+            self.object = invoice
+            return super().post(request, *args, **kwargs)
+
+        tiene_pagos = PagoCuotaVenta.objects.filter(
+            cuota__factura=invoice
+        ).exists()
+
+        if tiene_pagos:
+            messages.error(request, 'No se puede eliminar una factura con pagos parciales registrados.')
+            return redirect('creditos_ventas:factura_list')
+
+        invoice.cuotas.all().delete()
+
+        self.object = invoice
+        return super().post(request, *args, **kwargs)
 
 
 # === CUOTAS (CBV) ===
