@@ -1,0 +1,140 @@
+{% extends 'billing/base.html' %}
+{% block title %}Compras - Créditos y Compras{% endblock %}
+{% block content %}
+<h2>Compras</h2>
+<a href="{% url 'creditos_compras:compra_create' %}" class="btn btn-primary mb-3">
+  <i class="bi bi-plus-lg"></i> Nueva Compra
+</a>
+<a href="?{% for k, v in request.GET.items %}{% if k != 'format' %}{{ k }}={{ v }}&{% endif %}{% endfor %}format=pdf"
+   class="btn btn-outline-danger mb-3" title="Exportar a PDF">
+  <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+</a>
+<a href="?{% for k, v in request.GET.items %}{% if k != 'format' %}{{ k }}={{ v }}&{% endif %}{% endfor %}format=xlsx"
+   class="btn btn-outline-success mb-3" title="Exportar a Excel">
+  <i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel
+</a>
+<a href="{% url 'creditos_compras:cuotas_pendientes' %}" class="btn btn-outline-secondary mb-3">
+  <i class="bi bi-calendar-event"></i> Cuotas Pendientes
+</a>
+
+<div class="card mb-4 shadow-sm">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-2">
+        <label class="form-label">Proveedor</label>
+        <input type="text" name="proveedor" value="{{ filters.proveedor }}" class="form-control" placeholder="Nombre del proveedor">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Tipo Pago</label>
+        <select name="tipo_pago" class="form-select">
+          <option value="">Todos</option>
+          <option value="CONTADO" {% if filters.tipo_pago == 'CONTADO' %}selected{% endif %}>CONTADO</option>
+          <option value="CREDITO" {% if filters.tipo_pago == 'CREDITO' %}selected{% endif %}>CREDITO</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Estado</label>
+        <select name="estado" class="form-select">
+          <option value="">Todos</option>
+          <option value="PENDIENTE" {% if filters.estado == 'PENDIENTE' %}selected{% endif %}>PENDIENTE</option>
+          <option value="PAGADA" {% if filters.estado == 'PAGADA' %}selected{% endif %}>PAGADA</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Desde</label>
+        <input type="date" name="fecha_desde" value="{{ filters.fecha_desde }}" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Hasta</label>
+        <input type="date" name="fecha_hasta" value="{{ filters.fecha_hasta }}" class="form-control">
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-fill">Filtrar</button>
+        <a href="{% url 'creditos_compras:compra_list' %}" class="btn btn-secondary flex-fill">Limpiar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table class="table table-striped table-hover align-middle">
+  <thead class="table-dark">
+    <tr>
+      <th>Número</th>
+      <th>Fecha</th>
+      <th>Proveedor</th>
+      <th class="text-end">Total</th>
+      <th>Tipo Pago</th>
+      <th class="text-end">Saldo</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for compra in compras %}
+    <tr>
+      <td>#{{ compra.pk }}</td>
+      <td>{{ compra.purchase_date|date:"d/m/Y" }}</td>
+      <td>{{ compra.supplier }}</td>
+      <td class="text-end fw-bold">${{ compra.total }}</td>
+      <td>
+        {% if compra.tipo_pago == 'CONTADO' %}
+          <span class="badge bg-primary">CONTADO</span>
+        {% else %}
+          <span class="badge" style="background-color:#fd7e14;">CREDITO</span>
+        {% endif %}
+      </td>
+      <td class="text-end">${{ compra.saldo }}</td>
+      <td>
+        {% if compra.estado == 'PAGADA' %}
+          <span class="badge bg-success">PAGADA</span>
+        {% else %}
+          <span class="badge bg-warning text-dark">PENDIENTE</span>
+        {% endif %}
+      </td>
+      <td>
+        <a href="{% url 'creditos_compras:compra_detail' compra.pk %}" class="btn btn-sm btn-outline-dark" title="Detalle / Imprimir">
+          <i class="bi bi-printer"></i>
+        </a>
+        <a href="{% url 'creditos_compras:compra_update' compra.pk %}" class="btn btn-sm btn-warning" title="Editar">
+          <i class="bi bi-pencil"></i>
+        </a>
+        <a href="{% url 'creditos_compras:compra_delete' compra.pk %}" class="btn btn-sm btn-danger" title="Eliminar">
+          <i class="bi bi-trash"></i>
+        </a>
+        {% if compra.tipo_pago == 'CREDITO' %}
+        <a href="{% url 'creditos_compras:cuota_list' compra.pk %}" class="btn btn-sm btn-info" title="Ver Cuotas">
+          <i class="bi bi-list-check"></i> Cuotas
+        </a>
+        {% endif %}
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="8" class="text-center">No hay compras registradas.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if is_paginated %}
+<nav class="mt-3">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&proveedor={{ request.GET.proveedor }}&estado={{ request.GET.estado }}&tipo_pago={{ request.GET.tipo_pago }}&fecha_desde={{ request.GET.fecha_desde }}&fecha_hasta={{ request.GET.fecha_hasta }}">Anterior</a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}&proveedor={{ request.GET.proveedor }}&estado={{ request.GET.estado }}&tipo_pago={{ request.GET.tipo_pago }}&fecha_desde={{ request.GET.fecha_desde }}&fecha_hasta={{ request.GET.fecha_hasta }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&proveedor={{ request.GET.proveedor }}&estado={{ request.GET.estado }}&tipo_pago={{ request.GET.tipo_pago }}&fecha_desde={{ request.GET.fecha_desde }}&fecha_hasta={{ request.GET.fecha_hasta }}">Siguiente</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

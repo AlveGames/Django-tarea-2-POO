@@ -1,0 +1,73 @@
+{% extends 'billing/base.html' %}
+{% block title %}Recibo de Pagos{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card shadow" id="recibo">
+      <div class="card-header bg-success text-white text-center">
+        <h4 class="mb-0">&#9989; Pagos Registrados Exitosamente</h4>
+      </div>
+      <div class="card-body">
+        <h5 class="border-bottom pb-2">Datos de la Compra</h5>
+        <div class="row mb-3">
+          <div class="col-md-6"><strong>Número:</strong> #{{ compra.pk }}</div>
+          <div class="col-md-6"><strong>Proveedor:</strong> {{ compra.supplier }}</div>
+          <div class="col-md-6"><strong>Total:</strong> ${{ compra.total }}</div>
+          <div class="col-md-6">
+            <strong>Estado:</strong>
+            {% if compra.estado == 'PAGADA' %}
+              <span class="badge bg-success">PAGADA</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">PENDIENTE</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <h5 class="border-bottom pb-2">Cuotas Pagadas</h5>
+        <table class="table table-sm table-striped">
+          <thead>
+            <tr>
+              <th>Cuota N°</th>
+              <th>Fecha de Pago</th>
+              <th class="text-end">Valor Pagado</th>
+              <th>Observación</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for pago in pagos %}
+            <tr>
+              <td>{{ pago.cuota.numero }}</td>
+              <td>{{ pago.fecha|date:"d/m/Y" }}</td>
+              <td class="text-end">${{ pago.valor }}</td>
+              <td>{{ pago.observacion|default:"-" }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="fw-bold">
+              <td colspan="2">Total Pagado</td>
+              <td class="text-end">${{ total }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="d-flex gap-2 no-print">
+          <a href="{% url 'creditos_compras:cuota_list' compra.pk %}" class="btn btn-secondary">Volver a Cuotas</a>
+          <button type="button" class="btn btn-primary" onclick="window.print()">
+            <i class="bi bi-printer"></i> Imprimir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media print {
+    nav, .no-print, .navbar {
+      display: none !important;
+    }
+  }
+</style>
+{% endblock %}

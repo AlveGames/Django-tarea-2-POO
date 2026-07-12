@@ -1,0 +1,71 @@
+{% extends 'billing/base.html' %}
+{% block title %}Pagar Cuotas Seleccionadas - Compra #{{ compra.pk }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card shadow">
+      <div class="card-header bg-warning text-dark"><h4>Pagar Cuotas Seleccionadas</h4></div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div><strong>Compra:</strong> #{{ compra.pk }} - {{ compra.supplier }}</div>
+        </div>
+        <hr>
+        <table class="table table-sm table-striped">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Fecha Vencimiento</th>
+              <th class="text-end">Valor a Pagar</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for cuota in cuotas %}
+            <tr>
+              <td>{{ cuota.numero }}</td>
+              <td>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</td>
+              <td class="text-end">${{ cuota.saldo }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="fw-bold">
+              <td colspan="2">Total a Pagar</td>
+              <td class="text-end">${{ total }}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <hr>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="confirmar" value="1">
+          {% for cuota in cuotas %}
+          <input type="hidden" name="cuotas" value="{{ cuota.pk }}">
+          {% endfor %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Total a Pagar</label>
+            <input type="text" class="form-control" value="${{ total }}" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Fecha</label>
+            {{ form.fecha }}
+            {% for error in form.fecha.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Observación</label>
+            {{ form.observacion }}
+            {% for error in form.observacion.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="btn btn-warning">
+            <i class="bi bi-cash-coin"></i> Confirmar Pago
+          </button>
+          <a href="{% url 'creditos_compras:cuota_list' compra.pk %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

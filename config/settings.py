@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'security',
     'shop',
     'creditos_ventas',
+    'creditos_compras',
 ]
 
 MIDDLEWARE = [

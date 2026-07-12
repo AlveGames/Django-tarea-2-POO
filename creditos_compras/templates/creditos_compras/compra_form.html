@@ -1,0 +1,111 @@
+{% extends 'billing/base.html' %}
+{% block title %}{% if form.instance.pk %}Editar Compra{% else %}Nueva Compra{% endif %}{% endblock %}
+{% block content %}
+<div class="card shadow">
+  <div class="card-header bg-warning text-dark">
+    <h4>{% if form.instance.pk %}Editar Compra #{{ form.instance.pk }}{% else %}Nueva Compra{% endif %}</h4>
+  </div>
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label fw-bold">Proveedor</label>
+        {{ form.supplier }}
+        {% for error in form.supplier.errors %}
+        <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">N° Documento del Proveedor</label>
+        {{ form.document_number }}
+        {% for error in form.document_number.errors %}
+        <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label fw-bold">Subtotal</label>
+          {{ form.subtotal }}
+          {% for error in form.subtotal.errors %}
+          <div class="text-danger">{{ error }}</div>
+          {% endfor %}
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label fw-bold">IVA</label>
+          {{ form.tax }}
+          {% for error in form.tax.errors %}
+          <div class="text-danger">{{ error }}</div>
+          {% endfor %}
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label fw-bold">Total</label>
+          {{ form.total }}
+          {% for error in form.total.errors %}
+          <div class="text-danger">{{ error }}</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold d-block">Tipo de Pago</label>
+        {{ form.tipo_pago }}
+        {% for error in form.tipo_pago.errors %}
+        <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div id="cuotas-group" class="mb-3 d-none">
+        <label class="form-label fw-bold">Número de Cuotas</label>
+        {{ form.numero_cuotas }}
+        {% for error in form.numero_cuotas.errors %}
+        <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+        <div class="form-text">
+          Podrás confirmar y generar las cuotas mensuales luego de guardar la compra.
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-warning">Guardar</button>
+      <a href="{% url 'creditos_compras:compra_list' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const tipoPagoField = document.getElementById('id_tipo_pago');
+  const cuotasGroup = document.getElementById('cuotas-group');
+  if (!tipoPagoField || !cuotasGroup) return;
+
+  function toggleCuotas() {
+    if (tipoPagoField.value === 'CREDITO') {
+      cuotasGroup.classList.remove('d-none');
+    } else {
+      cuotasGroup.classList.add('d-none');
+    }
+  }
+
+  tipoPagoField.addEventListener('change', toggleCuotas);
+  toggleCuotas();
+})();
+
+document.addEventListener('DOMContentLoaded', function () {
+  const subtotal = document.getElementById('id_subtotal');
+  const iva = document.getElementById('id_tax');
+  const total = document.getElementById('id_total');
+  if (!subtotal || !iva || !total) return;
+
+  function calcularTotal() {
+    const s = parseFloat(subtotal.value) || 0;
+    const i = parseFloat(iva.value) || 0;
+    total.value = (s + i).toFixed(2);
+  }
+
+  subtotal.addEventListener('input', calcularTotal);
+  iva.addEventListener('input', calcularTotal);
+});
+</script>
+{% endblock %}

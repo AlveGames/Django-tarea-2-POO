@@ -1,0 +1,116 @@
+{% extends 'billing/base.html' %}
+{% block title %}Compra #{{ compra.pk }} - Detalle{% endblock %}
+{% block content %}
+<div id="compra-detalle">
+  <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+    <h2>Compra #{{ compra.pk }}</h2>
+    <div>
+      <button type="button" class="btn btn-outline-dark" onclick="window.print()">
+        <i class="bi bi-printer"></i> Imprimir
+      </button>
+      {% if compra.tipo_pago == 'CREDITO' %}
+      <a href="{% url 'creditos_compras:cuota_list' compra.pk %}" class="btn btn-outline-secondary">
+        <i class="bi bi-list-check"></i> Ver Cuotas
+      </a>
+      {% endif %}
+      <a href="{% url 'creditos_compras:compra_list' %}" class="btn btn-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-dark text-white">
+      <h4 class="mb-0">TecnoStock - Compra #{{ compra.pk }}</h4>
+    </div>
+    <div class="card-body">
+      <div class="row mb-2">
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Número:</strong> #{{ compra.pk }}</p>
+          <p class="mb-1"><strong>Fecha:</strong> {{ compra.purchase_date|date:"d/m/Y" }}</p>
+          <p class="mb-1"><strong>Proveedor:</strong> {{ compra.supplier }}</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <p class="mb-1">
+            <strong>Tipo de Pago:</strong>
+            {% if compra.tipo_pago == 'CONTADO' %}
+              <span class="badge bg-primary">CONTADO</span>
+            {% else %}
+              <span class="badge" style="background-color:#fd7e14;">CREDITO</span>
+            {% endif %}
+          </p>
+          <p class="mb-1">
+            <strong>Estado:</strong>
+            {% if compra.estado == 'PAGADA' %}
+              <span class="badge bg-success">PAGADA</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">PENDIENTE</span>
+            {% endif %}
+          </p>
+          <p class="mb-1"><strong>Total:</strong> ${{ compra.total }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if compra.tipo_pago == 'CREDITO' %}
+  <h5>Cuotas</h5>
+  <table class="table table-bordered table-striped align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>Número</th>
+        <th>Fecha Vencimiento</th>
+        <th class="text-end">Valor</th>
+        <th class="text-end">Saldo</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for cuota in cuotas %}
+      <tr>
+        <td>{{ cuota.numero }}</td>
+        <td>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</td>
+        <td class="text-end">${{ cuota.valor }}</td>
+        <td class="text-end">${{ cuota.saldo }}</td>
+        <td>
+          {% if cuota.estado == 'PAGADA' %}
+            <span class="badge bg-success">PAGADA</span>
+          {% else %}
+            <span class="badge bg-warning text-dark">PENDIENTE</span>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="text-center">Esta compra no tiene cuotas generadas.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <div class="d-flex justify-content-end">
+    <table class="table table-sm w-auto">
+      <tbody>
+        <tr>
+          <td class="text-end pe-3">Total Compra:</td>
+          <td class="text-end">${{ compra.total }}</td>
+        </tr>
+        <tr>
+          <td class="text-end pe-3">Total Pagado:</td>
+          <td class="text-end">${{ total_pagado }}</td>
+        </tr>
+        <tr class="table-warning fw-bold fs-5">
+          <td class="text-end pe-3">Saldo Pendiente:</td>
+          <td class="text-end">${{ compra.saldo }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+@media print {
+  nav.navbar, .no-print, .alert { display: none !important; }
+  body { background: #fff; }
+  .card { border: 1px solid #333 !important; }
+  .table thead.table-dark th { background-color: #343a40 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+{% endblock %}
