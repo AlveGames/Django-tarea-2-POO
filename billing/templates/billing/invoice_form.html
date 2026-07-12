@@ -1,5 +1,5 @@
 {% extends 'billing/base.html' %}
-{% block title %}{{ title }}{% endblock %}
+{% block title %}{% if request.resolver_match.url_name == 'invoice_update' %}Editar Factura{% else %}Nueva Factura{% endif %}{% endblock %}
 {% block content %}
 <div class="card shadow">
     <div class="card-header bg-warning text-dark"><h4>{{ title }}</h4></div>

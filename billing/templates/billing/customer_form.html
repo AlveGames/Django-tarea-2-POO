@@ -1,5 +1,5 @@
 {% extends 'billing/base.html' %}
-{% block title %}Cliente{% endblock %}
+{% block title %}{% if object %}Editar Cliente{% else %}Nuevo Cliente{% endif %}{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-8">
