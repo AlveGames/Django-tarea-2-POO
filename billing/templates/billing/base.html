@@ -141,7 +141,7 @@
       </button>
     </form>
     {% else %}
-    <a href="{% url 'login' %}" class="sidebar-link"><i class="bi bi-box-arrow-in-right"></i><span>Login</span></a>
+    <a href="{% url 'security:login' %}" class="sidebar-link"><i class="bi bi-box-arrow-in-right"></i><span>Login</span></a>
     <a href="{% url 'security:register' %}" class="sidebar-link"><i class="bi bi-person-plus"></i><span>Sign Up</span></a>
     {% endif %}
   </div>
@@ -164,10 +164,28 @@
           </form>
         </div>
       </div>
-      <button type="button" class="topbar-icon-btn position-relative" title="Notificaciones">
-        <i class="bi bi-bell"></i>
-        <span class="topbar-notif-dot"></span>
-      </button>
+      <div class="dropdown">
+        <button id="notificaciones-btn" class="topbar-icon-btn position-relative dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
+          <i class="bi bi-bell"></i>
+          <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" {% if notifications_count == 0 %}style="display: none;"{% endif %}>
+            {{ notifications_count }}
+          </span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" style="min-width: 320px;">
+          {% if notifications %}
+            {% for notif in notifications %}
+            <li>
+              <a class="dropdown-item d-flex align-items-center gap-2" href="{{ notif.url }}">
+                <i class="bi {{ notif.icono }} text-{{ notif.tipo }}"></i>
+                <span>{{ notif.mensaje }}</span>
+              </a>
+            </li>
+            {% endfor %}
+          {% else %}
+            <li><span class="dropdown-item text-muted">Sin notificaciones</span></li>
+          {% endif %}
+        </ul>
+      </div>
       {% if user.is_authenticated %}
       <div class="topbar-user d-none d-sm-block">
         <div class="topbar-user-name">{{ user.first_name|default:user.username }}</div>
@@ -216,6 +234,25 @@
     }
     sidebar.querySelectorAll('.sidebar-sublink, .sidebar-menu > li > .sidebar-link:not(.sidebar-toggle)').forEach(function (link) {
       link.addEventListener('click', closeSidebar);
+    });
+  })();
+
+  // Al abrir el dropdown de notificaciones, marcar todas como leídas (oculta el badge)
+  (function () {
+    var notifBtn = document.getElementById('notificaciones-btn');
+    if (!notifBtn) return;
+
+    notifBtn.addEventListener('click', function () {
+      fetch('{% url "billing:marcar_notificaciones_leidas" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'Content-Type': 'application/json',
+        },
+      }).then(function () {
+        var badge = document.getElementById('notif-badge');
+        if (badge) badge.style.display = 'none';
+      });
     });
   })();
 </script>

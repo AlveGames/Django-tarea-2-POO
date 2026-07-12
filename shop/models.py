@@ -28,6 +28,14 @@ class ShopOrder(models.Model):
     iva_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
+    # Factura generada en billing para esta orden
+    invoice = models.ForeignKey(
+        'billing.Invoice',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='shop_orders',
+    )
+
     def __str__(self):
         return self.order_number
 

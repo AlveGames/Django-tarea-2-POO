@@ -1,15 +1,17 @@
+import io
 import json
 from datetime import timedelta
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.template.loader import render_to_string
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django.utils import timezone
@@ -25,6 +27,112 @@ _MESES_ES = [
     'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ]
+
+
+def get_notifications(user):
+    """Calcula las notificaciones del topbar según el rol del usuario.
+
+    Cada preocupación se codifica una sola vez, en el bloque del rol al que
+    pertenece "de forma nativa" (Vendedor u Analista de Compras); Administrador
+    ve la unión de todo porque también satisface esos `or is_admin`, sin
+    duplicar notificaciones.
+    """
+    notifications = []
+
+    is_admin = user.is_superuser or user.groups.filter(name='Administrador').exists()
+    is_vendedor = user.groups.filter(name='Vendedor').exists()
+    is_analista = user.groups.filter(name='Analista de Compras').exists()
+
+    if not (is_admin or is_vendedor or is_analista):
+        return notifications
+
+    hoy = timezone.localdate()
+
+    # === ADMINISTRADOR (exclusivo) ===
+    if is_admin:
+        from django.contrib.auth.models import User as AuthUser
+        nuevos_usuarios = AuthUser.objects.filter(date_joined__date=hoy).count()
+        if nuevos_usuarios > 0:
+            notifications.append({
+                'tipo': 'info',
+                'icono': 'bi-person-plus',
+                'mensaje': f'{nuevos_usuarios} nuevo(s) usuario(s) registrado(s) hoy',
+                'url': reverse('security:user_list'),
+            })
+
+    # === VENDEDOR (y Administrador) ===
+    if is_vendedor or is_admin:
+        facturas_credito_pendientes = Invoice.objects.filter(
+            tipo_pago='CREDITO', estado='PENDIENTE'
+        ).count()
+        if facturas_credito_pendientes > 0:
+            notifications.append({
+                'tipo': 'info',
+                'icono': 'bi-receipt',
+                'mensaje': f'{facturas_credito_pendientes} factura(s) a crédito pendientes de pago',
+                'url': reverse('creditos_ventas:factura_list') + '?estado=PENDIENTE',
+            })
+
+        from creditos_ventas.models import CuotaVenta
+        cuotas_venta_vencidas = CuotaVenta.objects.filter(
+            estado='PENDIENTE',
+            fecha_vencimiento__lt=hoy,
+        ).count()
+        if cuotas_venta_vencidas > 0:
+            notifications.append({
+                'tipo': 'danger',
+                'icono': 'bi-calendar-x',
+                'mensaje': f'{cuotas_venta_vencidas} cuota(s) de crédito de ventas vencidas',
+                'url': reverse('creditos_ventas:cuotas_pendientes'),
+            })
+
+    # === ANALISTA DE COMPRAS (y Administrador) ===
+    if is_analista or is_admin:
+        productos_bajo_stock = Product.objects.filter(stock__lt=5, is_active=True)
+        for p in productos_bajo_stock:
+            notifications.append({
+                'tipo': 'warning',
+                'icono': 'bi-box-seam',
+                'mensaje': f'Stock bajo: {p.name} ({p.stock} unidades)',
+                'url': reverse('billing:product_list'),
+            })
+
+        from creditos_compras.models import CuotaCompra
+        cuotas_compra_vencidas = CuotaCompra.objects.filter(
+            estado='PENDIENTE',
+            fecha_vencimiento__lt=hoy,
+        ).count()
+        if cuotas_compra_vencidas > 0:
+            notifications.append({
+                'tipo': 'danger',
+                'icono': 'bi-cart-x',
+                'mensaje': f'{cuotas_compra_vencidas} cuota(s) de crédito de compras vencidas',
+                'url': reverse('creditos_compras:cuotas_pendientes'),
+            })
+
+    return notifications
+
+
+def _notification_key(notif):
+    """Identificador estable de una notificación para llevar el control de leídas."""
+    return f"{notif['tipo']}|{notif['mensaje']}"
+
+
+def get_unread_notifications_count(user, request):
+    """Notificaciones vigentes que el usuario todavía no marcó como leídas en esta sesión."""
+    notifications = get_notifications(user)
+    leidas = set(request.session.get('notif_leidas', []))
+    return sum(1 for n in notifications if _notification_key(n) not in leidas)
+
+
+@login_required
+@require_POST
+def marcar_notificaciones_leidas(request):
+    """Guarda en la sesión las notificaciones vigentes como leídas (oculta el badge)."""
+    notifications = get_notifications(request.user)
+    request.session['notif_leidas'] = [_notification_key(n) for n in notifications]
+    return JsonResponse({'status': 'ok'})
+
 
 # === HOME ===
 @login_required
@@ -61,6 +169,7 @@ def home(request):
         'ventas_data': ventas_data,
         'resumen_labels': [_('Facturas'), _('Compras'), _('Productos'), _('Clientes'), _('Marcas')],
         'resumen_data': [total_invoices, total_purchases, total_products, total_customers, total_brands],
+        'notifications': get_notifications(request.user),
     }
     return render(request, 'billing/home.html', context)
 
@@ -399,6 +508,130 @@ def invoice_list(request):
         'is_paginated': page_obj.has_other_pages(),
     })
 
+def _build_invoice_pdf(invoice):
+    """Genera el PDF de una factura en memoria y devuelve los bytes."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import (
+        Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle, HRFlowable,
+    )
+
+    purple = colors.HexColor('#4A00E0')
+    dark = colors.HexColor('#343a40')
+    light = colors.HexColor('#f8f9fa')
+    grey = colors.HexColor('#dee2e6')
+
+    styles = getSampleStyleSheet()
+    brand_style = ParagraphStyle(
+        'Brand', parent=styles['Title'], textColor=purple, fontSize=22, spaceAfter=0,
+    )
+    info_style = ParagraphStyle('Info', parent=styles['Normal'], fontSize=10, leading=14)
+    footer_style = ParagraphStyle(
+        'Footer', parent=styles['Normal'], fontSize=8, textColor=colors.grey, alignment=1,
+    )
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        leftMargin=2 * cm, rightMargin=2 * cm, topMargin=1.5 * cm, bottomMargin=1.5 * cm,
+    )
+
+    elements = [
+        Paragraph('TecnoStock', brand_style),
+        Paragraph('Sistema de Ventas y Facturación', info_style),
+        Spacer(1, 12),
+        HRFlowable(width='100%', color=grey, thickness=1),
+        Spacer(1, 12),
+        Paragraph(f'<b>Factura #{invoice.id}</b>', styles['Heading2']),
+        Paragraph(f'<b>Fecha:</b> {invoice.invoice_date.strftime("%d/%m/%Y")}', info_style),
+        Paragraph(f'<b>Cliente:</b> {invoice.customer}', info_style),
+        Paragraph(f'<b>DNI/RUC:</b> {invoice.customer.dni}', info_style),
+        Spacer(1, 16),
+    ]
+
+    data = [['Producto', 'Cantidad', 'Precio Unit.', 'Subtotal']]
+    for detail in invoice.details.all():
+        data.append([
+            detail.product.name,
+            str(detail.quantity),
+            f'${detail.unit_price}',
+            f'${detail.subtotal}',
+        ])
+
+    table = Table(data, colWidths=[8 * cm, 2.5 * cm, 3 * cm, 3 * cm])
+    style_cmds = [
+        ('BACKGROUND', (0, 0), (-1, 0), dark),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 0.4, grey),
+    ]
+    for i in range(2, len(data), 2):
+        style_cmds.append(('BACKGROUND', (0, i), (-1, i), light))
+    table.setStyle(TableStyle(style_cmds))
+    elements.append(table)
+    elements.append(Spacer(1, 16))
+
+    totals = Table(
+        [
+            ['Subtotal:', f'${invoice.subtotal}'],
+            ['IVA (15%):', f'${invoice.tax}'],
+            ['TOTAL:', f'${invoice.total}'],
+        ],
+        colWidths=[13.5 * cm, 3 * cm],
+    )
+    totals.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, 1), 'Helvetica'),
+        ('FONTNAME', (0, 2), (-1, 2), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('FONTSIZE', (0, 2), (-1, 2), 12),
+        ('LINEABOVE', (0, 2), (-1, 2), 0.75, dark),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(totals)
+    elements.append(Spacer(1, 40))
+    elements.append(HRFlowable(width='100%', color=grey, thickness=1))
+    elements.append(Spacer(1, 6))
+    elements.append(Paragraph(
+        'TecnoStock &middot; Quito, Ecuador &middot; contacto@tecnostock.com &middot; +593 2 000 0000',
+        footer_style,
+    ))
+
+    doc.build(elements)
+    pdf = buffer.getvalue()
+    buffer.close()
+    return pdf
+
+
+def send_invoice_email(invoice):
+    """Envía la factura en PDF al correo del cliente, si tiene uno registrado."""
+    if not invoice.customer.email:
+        return
+
+    html_message = render_to_string('emails/factura.html', {'invoice': invoice})
+    pdf = _build_invoice_pdf(invoice)
+
+    email = EmailMultiAlternatives(
+        subject=f'TecnoStock - Factura #{invoice.id}',
+        body=f'Adjuntamos el detalle de su factura #{invoice.id}. Total: ${invoice.total}',
+        from_email=None,
+        to=[invoice.customer.email],
+    )
+    email.attach_alternative(html_message, 'text/html')
+    email.attach(f'factura_{invoice.id}.pdf', pdf, 'application/pdf')
+    email.send(fail_silently=True)
+
+
 @login_required
 def invoice_create(request):
     if request.method == 'POST':
@@ -447,16 +680,7 @@ def invoice_create(request):
                 invoice.total = invoice.subtotal + invoice.tax
                 invoice.save()
 
-                if invoice.customer.email:
-                    html_message = render_to_string('emails/factura.html', {'invoice': invoice})
-                    send_mail(
-                        subject=f'TecnoStock - Factura #{invoice.id}',
-                        message=f'Adjuntamos el detalle de su factura #{invoice.id}. Total: ${invoice.total}',
-                        from_email=None,
-                        recipient_list=[invoice.customer.email],
-                        html_message=html_message,
-                        fail_silently=True,
-                    )
+                send_invoice_email(invoice)
 
                 messages.success(request, f'Invoice #{invoice.id} created! Total: ${invoice.total}')
                 return redirect('billing:invoice_list')

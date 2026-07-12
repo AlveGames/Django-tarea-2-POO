@@ -275,16 +275,6 @@ button:focus, button:active,
   background-color: var(--gray-light);
   color: var(--primary);
 }
-.topbar-notif-dot {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #e53935;
-  border: 2px solid var(--white);
-}
 .topbar-user {
   text-align: right;
   line-height: 1.2;

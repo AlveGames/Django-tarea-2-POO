@@ -5,6 +5,7 @@ app_name = 'billing'
 urlpatterns = [
     path('', views.home, name='home'),
     path('signup/', views.SignUpView.as_view(), name='signup'),
+    path('notificaciones/marcar-todas/', views.marcar_notificaciones_leidas, name='marcar_notificaciones_leidas'),
     # Brand (FBV)
     path('brands/', views.brand_list, name='brand_list'),
     path('brands/create/', views.brand_create, name='brand_create'),

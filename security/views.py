@@ -30,6 +30,9 @@ class RegisterView(CreateView):
         response = super().form_valid(form)
         login(self.request, self.object)   # inicia sesión automáticamente
 
+        grupo_cliente, _ = Group.objects.get_or_create(name='Cliente')
+        self.object.groups.add(grupo_cliente)
+
         html_message = render_to_string('emails/bienvenida.html', {'username': self.object.username})
         send_mail(
             subject='Bienvenido a TecnoStock',
@@ -44,6 +47,14 @@ class RegisterView(CreateView):
 class SecurityLoginView(LoginView):
     """Login con CBV. Reutiliza el template de la PARTE 9."""
     template_name = 'registration/login.html'
+
+    ROLES_INTERNOS = ['Administrador', 'Vendedor', 'Analista de Compras']
+
+    def get_success_url(self):
+        user = self.request.user
+        if user.is_superuser or user.groups.filter(name__in=self.ROLES_INTERNOS).exists():
+            return reverse_lazy('billing:home')
+        return reverse_lazy('shop:catalog')
 
 class SecurityLogoutView(LogoutView):
     """Logout con CBV. Redirige según LOGOUT_REDIRECT_URL."""

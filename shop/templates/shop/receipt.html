@@ -1,4 +1,4 @@
-{% extends 'billing/base.html' %}
+{% extends 'shop/base_shop.html' %}
 {% load static %}
 {% block title %}Recibo {{ order.order_number }}{% endblock %}
 
@@ -33,6 +33,11 @@
   <button onclick="window.print()" class="btn btn-outline-secondary">
     <i class="bi bi-printer me-1"></i> Imprimir
   </button>
+  {% if order.invoice %}
+  <a href="{% url 'billing:invoice_detail' order.invoice.pk %}" class="btn btn-outline-primary">
+    <i class="bi bi-receipt me-1"></i> Ver Factura #{{ order.invoice.pk }}
+  </a>
+  {% endif %}
   <a href="{% url 'shop:catalog' %}" class="btn btn-primary">
     <i class="bi bi-shop me-1"></i> Volver al catálogo
   </a>

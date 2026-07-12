@@ -244,7 +244,7 @@ class GroupRequiredMixin:
     def dispatch(self, request, *args, **kwargs):
         # 1. Si no inició sesión -> al login
         if not request.user.is_authenticated:
-            return redirect('login')
+            return redirect('security:login')
         # 2. El superusuario siempre pasa
         if request.user.is_superuser:
             return super().dispatch(request, *args, **kwargs)

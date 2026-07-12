@@ -9,11 +9,11 @@
         <form method="post">
           {% csrf_token %}
           {% for field in form %}
-          <div class="mb-3">
-            <label class="form-label">{{ field.label }}</label>
+          <div class="mb-3 text-center">
+            <label class="form-label d-block">{{ field.label }}</label>
             <input type="{{ field.field.widget.input_type }}"
                    name="{{ field.html_name }}"
-                   class="form-control {% if field.errors %}is-invalid{% endif %}"
+                   class="form-control mx-auto {% if field.errors %}is-invalid{% endif %}"
                    value="{{ field.value|default_if_none:'' }}">
             {% for error in field.errors %}
             <div class="invalid-feedback">{{ error }}</div>
@@ -23,7 +23,7 @@
           <button type="submit" class="btn btn-primary w-100">Login</button>
         </form>
         <p class="mt-3 text-center">
-          Don't have an account? <a href="{% url 'billing:signup' %}">Sign up</a>
+          ¿No tienes cuenta? <a href="{% url 'billing:signup' %}">Regístrate</a>
         </p>
       </div>
     </div>

@@ -3,16 +3,21 @@ import string
 from decimal import Decimal
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView
 
-from billing.models import Product, ProductGroup
+from billing.models import Customer, Invoice, InvoiceDetail, Product, ProductGroup
+from billing.views import send_invoice_email
+from shared.decorators import group_required
+from shared.mixins import GroupRequiredMixin
 from .forms import CheckoutForm
 from .models import ShopOrder, ShopOrderDetail
 
 IVA_RATE = Decimal('0.15')
+
+# Roles autorizados a comprar en la tienda: el Cliente y los roles internos
+ROLES_TIENDA = ['Cliente', 'Administrador', 'Vendedor', 'Analista de Compras']
 
 
 def _get_cart(request):
@@ -55,6 +60,51 @@ def _generate_order_number():
             return order_number
 
 
+def crear_factura_desde_shop(shop_order):
+    """Genera en billing la Invoice correspondiente a una ShopOrder pagada."""
+    name_parts = shop_order.full_name.split()
+    first_name = name_parts[0] if name_parts else shop_order.full_name
+    last_name = ' '.join(name_parts[1:])
+
+    customer, _created = Customer.objects.get_or_create(
+        dni=shop_order.dni,
+        defaults={
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': shop_order.email,
+            'phone': shop_order.phone,
+            'address': shop_order.address,
+        },
+    )
+
+    invoice = Invoice.objects.create(
+        customer=customer,
+        subtotal=shop_order.subtotal,
+        subtotal_iva=shop_order.subtotal_iva,
+        subtotal_0=shop_order.subtotal - shop_order.subtotal_iva,
+        tax=shop_order.iva_amount,
+        iva_amount=shop_order.iva_amount,
+        total=shop_order.total,
+        tipo_pago='CONTADO',
+        estado='PAGADA',
+        saldo=0,
+    )
+
+    for detail in shop_order.details.all():
+        InvoiceDetail.objects.create(
+            invoice=invoice,
+            product=detail.product,
+            quantity=detail.quantity,
+            unit_price=detail.unit_price,
+            applies_iva=detail.product.applies_iva,
+        )
+
+    shop_order.invoice = invoice
+    shop_order.save(update_fields=['invoice'])
+
+    return invoice
+
+
 class CatalogView(ListView):
     model = Product
     template_name = 'shop/catalog.html'
@@ -79,8 +129,10 @@ class CatalogView(ListView):
         return context
 
 
-class CartView(LoginRequiredMixin, TemplateView):
+class CartView(GroupRequiredMixin, TemplateView):
     template_name = 'shop/cart.html'
+    group_required = ROLES_TIENDA
+    group_redirect_url = 'shop:catalog'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -88,7 +140,7 @@ class CartView(LoginRequiredMixin, TemplateView):
         return context
 
 
-@login_required
+@group_required(*ROLES_TIENDA, redirect_url='shop:catalog')
 def add_to_cart(request, pk):
     product = get_object_or_404(Product, pk=pk, is_active=True)
     try:
@@ -119,7 +171,7 @@ def add_to_cart(request, pk):
     return redirect('shop:catalog')
 
 
-@login_required
+@group_required(*ROLES_TIENDA, redirect_url='shop:catalog')
 def remove_from_cart(request, pk):
     cart = _get_cart(request)
     key = str(pk)
@@ -130,7 +182,7 @@ def remove_from_cart(request, pk):
     return redirect('shop:cart')
 
 
-@login_required
+@group_required(*ROLES_TIENDA, redirect_url='shop:catalog')
 def update_cart(request, pk):
     cart = _get_cart(request)
     key = str(pk)
@@ -151,8 +203,10 @@ def update_cart(request, pk):
     return redirect('shop:cart')
 
 
-class CheckoutView(LoginRequiredMixin, TemplateView):
+class CheckoutView(GroupRequiredMixin, TemplateView):
     template_name = 'shop/checkout.html'
+    group_required = ROLES_TIENDA
+    group_redirect_url = 'shop:catalog'
 
     def get(self, request, *args, **kwargs):
         if not _get_cart(request):
@@ -171,7 +225,7 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         return context
 
 
-@login_required
+@group_required(*ROLES_TIENDA, redirect_url='shop:catalog')
 def process_payment(request):
     if request.method != 'POST':
         return redirect('shop:checkout')
@@ -254,6 +308,9 @@ def process_payment(request):
     request.session['cart'] = {}
     request.session.modified = True
 
+    invoice = crear_factura_desde_shop(order)
+    send_invoice_email(invoice)
+
     messages.success(request, f'¡Pago aprobado! Orden {order.order_number} creada.')
     return redirect('shop:receipt', pk=order.pk)
 
@@ -268,3 +325,16 @@ class OrderReceiptView(LoginRequiredMixin, DetailView):
         if not (self.request.user.is_staff or self.request.user.is_superuser):
             qs = qs.filter(user=self.request.user)
         return qs
+
+
+class MisOrdenesView(LoginRequiredMixin, ListView):
+    """Historial de órdenes de compra del cliente logueado."""
+    model = ShopOrder
+    template_name = 'shop/mis_ordenes.html'
+    context_object_name = 'orders'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return ShopOrder.objects.filter(
+            user=self.request.user
+        ).prefetch_related('details__product').order_by('-created_at')

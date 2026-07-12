@@ -75,6 +75,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'shop.context_processors.cart',
+                'billing.context_processors.notifications_processor',
             ],
         },
     },
@@ -144,8 +145,8 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/accounts/login/'
-LOGIN_URL = '/accounts/login/'
+LOGOUT_REDIRECT_URL = '/security/login/'
+LOGIN_URL = '/security/login/'
 
 
 # Email (Gmail SMTP)

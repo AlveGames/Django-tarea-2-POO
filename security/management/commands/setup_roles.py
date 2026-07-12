@@ -22,6 +22,11 @@ ROLES = {
         'view_supplier', 'add_supplier', 'change_supplier', 'delete_supplier',
         'view_product', 'add_product', 'change_product', 'delete_product',
     ],
+
+    # El Cliente solo navega el catálogo de la tienda
+    'Cliente': [
+        'view_product',
+    ],
 }
 
 class Command(BaseCommand):

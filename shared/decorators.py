@@ -1,8 +1,29 @@
 import logging
 from functools import wraps
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
 from django.utils import timezone
 
 logger = logging.getLogger('audit')
+
+
+def group_required(*group_names, redirect_url='/'):
+    """Requiere login y que el usuario pertenezca a alguno de los roles indicados.
+
+    El superusuario siempre pasa. Sin login -> redirige al login (vía LOGIN_URL).
+    """
+    def decorator(view_func):
+        @login_required
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            user = request.user
+            if user.is_superuser or user.groups.filter(name__in=group_names).exists():
+                return view_func(request, *args, **kwargs)
+            messages.error(request, 'No tienes permiso para acceder a esta sección.')
+            return redirect(redirect_url)
+        return wrapper
+    return decorator
 
 def audit_action(action_name):
     def decorator(view_func):
