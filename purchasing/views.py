@@ -63,7 +63,7 @@ def purchase_create(request):
     return render(request, 'purchasing/purchase_form.html', {
         'form': form,
         'formset': formset,
-        'title': 'Create Purchase',
+        'title': 'Crear Compra',
     })
 
 @login_required

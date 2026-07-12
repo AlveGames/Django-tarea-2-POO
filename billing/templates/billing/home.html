@@ -1,82 +1,72 @@
 {% extends 'billing/base.html' %}
 {% block title %}Inicio - TecnoStock{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
 {% block content %}
 
 <div class="p-4 mb-4 bg-light rounded-3">
-    <h1>Bienvenido, {{ user.first_name|default:user.username }}!</h1>
-    <p class="lead">Sistema de Ventas y Facturación — Ecuador</p>
+    <h1 class="h3 mb-1">Bienvenido, {{ user.first_name|default:user.username }}!</h1>
+    <p class="text-muted mb-1"><i class="bi bi-calendar3 me-1"></i>{{ today_display }}</p>
+    <p class="lead mb-0">Sistema de Ventas y Facturación — Ecuador</p>
 </div>
 
 <div class="row mb-4 g-3">
     <div class="col-md-4 col-lg-2">
         <div class="card stat-card stat-card-blue">
-            <div class="card-body text-center">
-                <i class="bi bi-tags stat-icon d-block mb-2"></i>
-                <h2>{{ total_brands }}</h2>
-                <p class="mb-1">Marcas</p>
-                <a href="{% url 'billing:brand_list' %}" class="btn btn-outline-light btn-sm mt-2">
-                    Ver todas →
-                </a>
+            <div class="card-body">
+                <div class="stat-icon-badge"><i class="bi bi-tags"></i></div>
+                <h2 class="stat-number">{{ total_brands }}</h2>
+                <p class="stat-label">Marcas</p>
+                <a href="{% url 'billing:brand_list' %}" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-lg-2">
         <div class="card stat-card stat-card-green">
-            <div class="card-body text-center">
-                <i class="bi bi-box-seam stat-icon d-block mb-2"></i>
-                <h2>{{ total_products }}</h2>
-                <p class="mb-1">Productos</p>
-                <a href="{% url 'billing:product_list' %}" class="btn btn-outline-light btn-sm mt-2">
-                    Ver todas →
-                </a>
+            <div class="card-body">
+                <div class="stat-icon-badge"><i class="bi bi-box-seam"></i></div>
+                <h2 class="stat-number">{{ total_products }}</h2>
+                <p class="stat-label">Productos</p>
+                <a href="{% url 'billing:product_list' %}" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-lg-2">
         <div class="card stat-card stat-card-cyan">
-            <div class="card-body text-center">
-                <i class="bi bi-people stat-icon d-block mb-2"></i>
-                <h2>{{ total_customers }}</h2>
-                <p class="mb-1">Clientes</p>
-                <a href="{% url 'billing:customer_list' %}" class="btn btn-outline-light btn-sm mt-2">
-                    Ver todas →
-                </a>
+            <div class="card-body">
+                <div class="stat-icon-badge"><i class="bi bi-people"></i></div>
+                <h2 class="stat-number">{{ total_customers }}</h2>
+                <p class="stat-label">Clientes</p>
+                <a href="{% url 'billing:customer_list' %}" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-lg-2">
         <div class="card stat-card stat-card-purple">
-            <div class="card-body text-center">
-                <i class="bi bi-receipt stat-icon d-block mb-2"></i>
-                <h2>{{ total_invoices }}</h2>
-                <p class="mb-1">Facturas</p>
-                <a href="{% url 'billing:invoice_list' %}" class="btn btn-outline-light btn-sm mt-2">
-                    Ver todas →
-                </a>
+            <div class="card-body">
+                <div class="stat-icon-badge"><i class="bi bi-receipt"></i></div>
+                <h2 class="stat-number">{{ total_invoices }}</h2>
+                <p class="stat-label">Facturas</p>
+                <a href="{% url 'billing:invoice_list' %}" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-lg-2">
         <div class="card stat-card stat-card-orange">
-            <div class="card-body text-center">
-                <i class="bi bi-cart-check stat-icon d-block mb-2"></i>
-                <h2>{{ total_purchases }}</h2>
-                <p class="mb-1">Compras</p>
-                <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-outline-light btn-sm mt-2">
-                    Ver todas →
-                </a>
+            <div class="card-body">
+                <div class="stat-icon-badge"><i class="bi bi-cart-check"></i></div>
+                <h2 class="stat-number">{{ total_purchases }}</h2>
+                <p class="stat-label">Compras</p>
+                <a href="{% url 'purchasing:purchase_list' %}" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-lg-2">
         <div class="card stat-card stat-card-red">
-            <div class="card-body text-center">
-                <i class="bi bi-exclamation-circle stat-icon d-block mb-2"></i>
-                <h2>{{ creditos_ventas_pendientes }}</h2>
-                <p class="mb-1">Créditos Ventas Pendientes</p>
-                <a href="{% url 'creditos_ventas:factura_list' %}?estado=PENDIENTE" class="btn btn-outline-light btn-sm mt-2">
-                    Ver todas →
-                </a>
+            <div class="card-body">
+                <div class="stat-icon-badge"><i class="bi bi-exclamation-circle"></i></div>
+                <h2 class="stat-number">{{ creditos_ventas_pendientes }}</h2>
+                <p class="stat-label stat-label-sm">Créd. Ventas Pend.</p>
+                <a href="{% url 'creditos_ventas:factura_list' %}?estado=PENDIENTE" class="stat-link">Ver todas <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
@@ -136,5 +126,97 @@
         </div>
     </div>
 </div>
+
+<div class="row mt-4">
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header bg-white"><h5 class="mb-0">Ventas — Últimos 7 días</h5></div>
+            <div class="card-body">
+                <canvas id="ventasChart" height="140"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header bg-white"><h5 class="mb-0">Resumen General</h5></div>
+            <div class="card-body">
+                <div class="chart-donut-wrap">
+                    <canvas id="resumenChart"></canvas>
+                    <div class="chart-donut-total">
+                        <div class="chart-donut-total-value">{{ total_invoices|add:total_purchases|add:total_products|add:total_customers|add:total_brands }}</div>
+                        <div class="chart-donut-total-label">Total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ ventas_labels|json_script:"ventas-labels-data" }}
+{{ ventas_data|json_script:"ventas-data-data" }}
+{{ resumen_labels|json_script:"resumen-labels-data" }}
+{{ resumen_data|json_script:"resumen-data-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    var ventasLabels = JSON.parse(document.getElementById('ventas-labels-data').textContent);
+    var ventasData = JSON.parse(document.getElementById('ventas-data-data').textContent);
+    var resumenLabels = JSON.parse(document.getElementById('resumen-labels-data').textContent);
+    var resumenData = JSON.parse(document.getElementById('resumen-data-data').textContent);
+
+    var ventasCtx = document.getElementById('ventasChart').getContext('2d');
+    var gradient = ventasCtx.createLinearGradient(0, 0, 0, 260);
+    gradient.addColorStop(0, 'rgba(74, 0, 224, 0.35)');
+    gradient.addColorStop(1, 'rgba(74, 0, 224, 0.02)');
+
+    new Chart(ventasCtx, {
+        type: 'line',
+        data: {
+            labels: ventasLabels,
+            datasets: [{
+                label: 'Ventas ($)',
+                data: ventasData,
+                borderColor: '#4A00E0',
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.35,
+                pointBackgroundColor: '#4A00E0',
+                pointBorderColor: '#fff',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: function (v) { return '$' + v; } } },
+            },
+        },
+    });
+
+    new Chart(document.getElementById('resumenChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: resumenLabels,
+            datasets: [{
+                data: resumenData,
+                backgroundColor: ['#1a73e8', '#f4511e', '#e91e8c', '#fbbc04', '#0f9d58'],
+                borderWidth: 2,
+                borderColor: '#fff',
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '70%',
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12 } } },
+        },
+    });
+})();
+</script>
 
 {% endblock %}

@@ -1,6 +1,8 @@
 import json
+from datetime import timedelta
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -10,6 +12,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.contrib.auth import login
 from django.http import JsonResponse
+from django.utils import timezone
 from .models import *
 from .forms import SignUpForm, BrandForm, ProductForm, InvoiceForm, InvoiceDetailFormSet
 from shared.mixins import StaffRequiredMixin, ExportMixin
@@ -17,18 +20,46 @@ from shared.decorators import audit_action
 from decimal import Decimal
 from purchasing.models import Purchase
 
+_MESES_ES = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+]
+
 # === HOME ===
 @login_required
 def home(request):
+    hoy = timezone.localdate()
+    today_display = f'{hoy.day} de {_MESES_ES[hoy.month - 1]} de {hoy.year}'
+
+    total_brands = Brand.objects.count()
+    total_products = Product.objects.count()
+    total_customers = Customer.objects.count()
+    total_invoices = Invoice.objects.count()
+    total_purchases = Purchase.objects.count()
+
+    hace_7_dias = hoy - timedelta(days=6)
+    ventas_labels = []
+    ventas_data = []
+    for i in range(7):
+        dia = hace_7_dias + timedelta(days=i)
+        total_dia = Invoice.objects.filter(invoice_date__date=dia).aggregate(t=Sum('total'))['t'] or Decimal('0')
+        ventas_labels.append(dia.strftime('%d/%m'))
+        ventas_data.append(float(total_dia))
+
     context = {
-        'total_brands': Brand.objects.count(),
-        'total_products': Product.objects.count(),
-        'total_customers': Customer.objects.count(),
-        'total_invoices': Invoice.objects.count(),
-        'total_purchases': Purchase.objects.count(),
+        'total_brands': total_brands,
+        'total_products': total_products,
+        'total_customers': total_customers,
+        'total_invoices': total_invoices,
+        'total_purchases': total_purchases,
         'creditos_ventas_pendientes': Invoice.objects.filter(tipo_pago='CREDITO', estado='PENDIENTE').count(),
         'recent_invoices': Invoice.objects.all()[:5],
         'low_stock': Product.objects.filter(stock__lte=5, is_active=True),
+        'today_display': today_display,
+        'ventas_labels': ventas_labels,
+        'ventas_data': ventas_data,
+        'resumen_labels': ['Facturas', 'Compras', 'Productos', 'Clientes', 'Marcas'],
+        'resumen_data': [total_invoices, total_purchases, total_products, total_customers, total_brands],
     }
     return render(request, 'billing/home.html', context)
 
@@ -59,7 +90,7 @@ def brand_create(request):
             messages.success(request, 'Brand created!')
             return redirect('billing:brand_list')
     else: form = BrandForm()
-    return render(request, 'billing/brand_form.html', {'form': form, 'title': 'Create Brand'})
+    return render(request, 'billing/brand_form.html', {'form': form, 'title': 'Crear Marca'})
 
 @login_required
 @audit_action('UPDATE_BRAND')
@@ -72,7 +103,7 @@ def brand_update(request, pk):
             messages.success(request, 'Brand updated!')
             return redirect('billing:brand_list')
     else: form = BrandForm(instance=brand)
-    return render(request, 'billing/brand_form.html', {'form': form, 'title': 'Edit Brand'})
+    return render(request, 'billing/brand_form.html', {'form': form, 'title': 'Editar Marca'})
 
 @login_required
 @audit_action('DELETE_BRAND')
@@ -434,7 +465,7 @@ def invoice_create(request):
     return render(request, 'billing/invoice_form.html', {
         'form': form,
         'formset': formset,
-        'title': 'Create Invoice',
+        'title': 'Crear Factura',
     })
 
 @login_required

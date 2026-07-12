@@ -26,109 +26,192 @@
 {% url 'security:group_list' as group_list_url %}
 {% url 'security:permission_list' as permission_list_url %}
 
-<!-- Barra de navegación -->
-<nav class="navbar navbar-expand-lg navbar-dark tecnostock-navbar">
-  <div class="container">
-    <a class="navbar-brand" href="{% url 'billing:home' %}">TecnoStock</a>
-    <ul class="navbar-nav">
-      <li class="nav-item"><a class="nav-link {% if request.path == catalog_url %}active{% endif %}" href="{{ catalog_url }}">Catálogo</a></li>
-    </ul>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav mx-auto">
-        {% if user.is_authenticated %}
+<button class="sidebar-mobile-toggle" id="sidebarToggler" type="button" aria-label="Abrir menú">
+  <i class="bi bi-list"></i>
+</button>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
-          <!-- GESTIÓN: Analista de Compras y Administrador -->
-          {% if user|has_group:'Analista de Compras' or user|has_group:'Administrador' %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if '/brands/' in request.path or '/groups/' in request.path or '/suppliers/' in request.path or '/products/' in request.path %}active{% endif %}" href="#" data-bs-toggle="dropdown">Gestión</a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item {% if request.path == brand_list_url %}active{% endif %}" href="{{ brand_list_url }}">Brands</a></li>
-              <li><a class="dropdown-item {% if request.path == productgroup_list_url %}active{% endif %}" href="{{ productgroup_list_url }}">Groups</a></li>
-              <li><a class="dropdown-item {% if request.path == supplier_list_url %}active{% endif %}" href="{{ supplier_list_url }}">Suppliers</a></li>
-              <li><a class="dropdown-item {% if request.path == product_list_url %}active{% endif %}" href="{{ product_list_url }}">Products</a></li>
-            </ul>
-          </li>
-          {% endif %}
+<aside class="sidebar" id="sidebar">
+  <a class="sidebar-brand" href="{% url 'billing:home' %}">
+    <i class="bi bi-box-seam-fill"></i>
+    <span>TecnoStock</span>
+  </a>
 
-          <!-- VENTAS: Vendedor y Administrador -->
-          {% if user|has_group:'Vendedor' or user|has_group:'Administrador' %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if '/customers/' in request.path or '/invoices/' in request.path or '/creditos-ventas/' in request.path %}active{% endif %}" href="#" data-bs-toggle="dropdown">Ventas</a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item {% if request.path == customer_list_url %}active{% endif %}" href="{{ customer_list_url }}">Customers</a></li>
-              <li><a class="dropdown-item {% if request.path == invoice_list_url %}active{% endif %}" href="{{ invoice_list_url }}">Invoices</a></li>
-              <li><a class="dropdown-item {% if request.path == factura_list_url %}active{% endif %}" href="{{ factura_list_url }}">Créditos Ventas</a></li>
-            </ul>
-          </li>
-          {% endif %}
+  <nav class="sidebar-nav">
+    <ul class="sidebar-menu">
+      <li>
+        <a class="sidebar-link {% if request.path == '/' %}active{% endif %}" href="{% url 'billing:home' %}">
+          <i class="bi bi-house-door"></i><span>Inicio</span>
+        </a>
+      </li>
+      <li>
+        <a class="sidebar-link {% if request.path == catalog_url %}active{% endif %}" href="{{ catalog_url }}">
+          <i class="bi bi-shop"></i><span>Catálogo</span>
+        </a>
+      </li>
 
-          <!-- COMPRAS: Analista de Compras y Administrador -->
-          {% if user|has_group:'Analista de Compras' or user|has_group:'Administrador' %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if '/purchases/' in request.path or '/creditos-compras/' in request.path %}active{% endif %}" href="#" data-bs-toggle="dropdown">Compras</a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item {% if request.path == purchase_list_url %}active{% endif %}" href="{{ purchase_list_url }}">Purchases</a></li>
-              <li><a class="dropdown-item {% if request.path == compra_list_url %}active{% endif %}" href="{{ compra_list_url }}">Créditos Compras</a></li>
-            </ul>
-          </li>
-          {% endif %}
+      {% if user.is_authenticated %}
 
-          <!-- SEGURIDAD: solo Administrador -->
-          {% if user|has_group:'Administrador' %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if '/security/' in request.path %}active{% endif %}" href="#" data-bs-toggle="dropdown">Seguridad</a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item {% if request.path == user_list_url %}active{% endif %}" href="{{ user_list_url }}">Users</a></li>
-              <li><a class="dropdown-item {% if request.path == group_list_url %}active{% endif %}" href="{{ group_list_url }}">Roles</a></li>
-              <li><a class="dropdown-item {% if request.path == permission_list_url %}active{% endif %}" href="{{ permission_list_url }}">Permissions</a></li>
-            </ul>
-          </li>
-          {% endif %}
-
+        {% if user|has_group:'Analista de Compras' or user|has_group:'Administrador' %}
+        <li class="sidebar-group">
+          <a class="sidebar-link sidebar-toggle {% if '/brands/' in request.path or '/groups/' in request.path or '/suppliers/' in request.path or '/products/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuGestion" aria-expanded="{% if '/brands/' in request.path or '/groups/' in request.path or '/suppliers/' in request.path or '/products/' in request.path %}true{% else %}false{% endif %}">
+            <i class="bi bi-box-seam"></i><span>Gestión</span><i class="bi bi-chevron-down sidebar-caret"></i>
+          </a>
+          <ul class="collapse sidebar-submenu {% if '/brands/' in request.path or '/groups/' in request.path or '/suppliers/' in request.path or '/products/' in request.path %}show{% endif %}" id="menuGestion">
+            <li><a class="sidebar-sublink {% if request.path == brand_list_url %}active{% endif %}" href="{{ brand_list_url }}">Marcas</a></li>
+            <li><a class="sidebar-sublink {% if request.path == productgroup_list_url %}active{% endif %}" href="{{ productgroup_list_url }}">Grupos</a></li>
+            <li><a class="sidebar-sublink {% if request.path == supplier_list_url %}active{% endif %}" href="{{ supplier_list_url }}">Proveedores</a></li>
+            <li><a class="sidebar-sublink {% if request.path == product_list_url %}active{% endif %}" href="{{ product_list_url }}">Productos</a></li>
+          </ul>
+        </li>
         {% endif %}
-      </ul>
-      <ul class="navbar-nav align-items-lg-center">
-        {% if user.is_authenticated %}
+
+        {% if user|has_group:'Vendedor' or user|has_group:'Administrador' %}
+        <li class="sidebar-group">
+          <a class="sidebar-link sidebar-toggle {% if '/customers/' in request.path or '/invoices/' in request.path or '/creditos-ventas/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuVentas" aria-expanded="{% if '/customers/' in request.path or '/invoices/' in request.path or '/creditos-ventas/' in request.path %}true{% else %}false{% endif %}">
+            <i class="bi bi-cash-coin"></i><span>Ventas</span><i class="bi bi-chevron-down sidebar-caret"></i>
+          </a>
+          <ul class="collapse sidebar-submenu {% if '/customers/' in request.path or '/invoices/' in request.path or '/creditos-ventas/' in request.path %}show{% endif %}" id="menuVentas">
+            <li><a class="sidebar-sublink {% if request.path == customer_list_url %}active{% endif %}" href="{{ customer_list_url }}">Clientes</a></li>
+            <li><a class="sidebar-sublink {% if request.path == invoice_list_url %}active{% endif %}" href="{{ invoice_list_url }}">Facturas</a></li>
+            <li><a class="sidebar-sublink {% if request.path == factura_list_url %}active{% endif %}" href="{{ factura_list_url }}">Créditos Ventas</a></li>
+          </ul>
+        </li>
+        {% endif %}
+
+        {% if user|has_group:'Analista de Compras' or user|has_group:'Administrador' %}
+        <li class="sidebar-group">
+          <a class="sidebar-link sidebar-toggle {% if '/purchases/' in request.path or '/creditos-compras/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuCompras" aria-expanded="{% if '/purchases/' in request.path or '/creditos-compras/' in request.path %}true{% else %}false{% endif %}">
+            <i class="bi bi-cart3"></i><span>Compras</span><i class="bi bi-chevron-down sidebar-caret"></i>
+          </a>
+          <ul class="collapse sidebar-submenu {% if '/purchases/' in request.path or '/creditos-compras/' in request.path %}show{% endif %}" id="menuCompras">
+            <li><a class="sidebar-sublink {% if request.path == purchase_list_url %}active{% endif %}" href="{{ purchase_list_url }}">Compras</a></li>
+            <li><a class="sidebar-sublink {% if request.path == compra_list_url %}active{% endif %}" href="{{ compra_list_url }}">Créditos Compras</a></li>
+          </ul>
+        </li>
+        {% endif %}
+
+        {% if user|has_group:'Administrador' %}
+        <li class="sidebar-group">
+          <a class="sidebar-link sidebar-toggle {% if '/security/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuSeguridad" aria-expanded="{% if '/security/' in request.path %}true{% else %}false{% endif %}">
+            <i class="bi bi-shield-lock"></i><span>Seguridad</span><i class="bi bi-chevron-down sidebar-caret"></i>
+          </a>
+          <ul class="collapse sidebar-submenu {% if '/security/' in request.path %}show{% endif %}" id="menuSeguridad">
+            <li><a class="sidebar-sublink {% if request.path == user_list_url %}active{% endif %}" href="{{ user_list_url }}">Usuarios</a></li>
+            <li><a class="sidebar-sublink {% if request.path == group_list_url %}active{% endif %}" href="{{ group_list_url }}">Roles</a></li>
+            <li><a class="sidebar-sublink {% if request.path == permission_list_url %}active{% endif %}" href="{{ permission_list_url }}">Permisos</a></li>
+          </ul>
+        </li>
+        {% endif %}
+
         {% if not user.groups.exists and not user.is_superuser %}
-        <li class="nav-item">
-          <a class="nav-link position-relative" href="{% url 'shop:cart' %}">
-            <i class="bi bi-cart3 fs-5"></i>
+        <li>
+          <a class="sidebar-link" href="{% url 'shop:cart' %}">
+            <i class="bi bi-cart3"></i><span>Carrito</span>
             {% if cart_items_count > 0 %}
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-              {{ cart_items_count }}
-            </span>
+            <span class="badge rounded-pill bg-danger ms-auto">{{ cart_items_count }}</span>
             {% endif %}
           </a>
         </li>
         {% endif %}
-        <li class="nav-item"><span class="nav-link text-light">{{ user.username }}</span></li>
-        <li class="nav-item"><form method="post" action="{% url 'logout' %}" class="d-inline">
-    {% csrf_token %}
-    <button type="submit" class="nav-link btn btn-link text-light"
-            style="text-decoration:none;">Logout</button>
-</form></li>
-        {% else %}
-        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'security:register' %}">Sign Up</a></li>
-        {% endif %}
-      </ul>
+
+      {% endif %}
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    {% if user.is_authenticated %}
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">{{ user.username|slice:":1"|upper }}</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">{{ user.first_name|default:user.username }}</div>
+        <div class="sidebar-user-role">
+          {% if user.is_superuser %}Administrador
+          {% elif user.groups.first %}{{ user.groups.first.name }}
+          {% else %}Sin rol{% endif %}
+        </div>
+      </div>
     </div>
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="sidebar-logout-btn">
+        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+      </button>
+    </form>
+    {% else %}
+    <a href="{% url 'login' %}" class="sidebar-link"><i class="bi bi-box-arrow-in-right"></i><span>Login</span></a>
+    <a href="{% url 'security:register' %}" class="sidebar-link"><i class="bi bi-person-plus"></i><span>Sign Up</span></a>
+    {% endif %}
   </div>
-</nav>
-<!-- Contenido principal -->
-<div class="container mt-4">
-  {% if messages %}
-    {% for m in messages %}
-    <div class="alert alert-{{ m.tags }} alert-dismissible fade show">
-      {{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</aside>
+
+<div class="main-wrapper" id="mainWrapper">
+  <header class="topbar">
+    <h4 class="topbar-title">{% block page_title %}{{ request.resolver_match.url_name|default:"dashboard"|humanize_slug }}{% endblock %}</h4>
+    <div class="topbar-actions">
+      <div class="dropdown">
+        <button class="topbar-icon-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Idioma">
+          <i class="bi bi-translate"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item active" href="#">🇪🇨 Español</a></li>
+          <li><a class="dropdown-item" href="#">🇬🇧 English</a></li>
+        </ul>
+      </div>
+      <button type="button" class="topbar-icon-btn position-relative" title="Notificaciones">
+        <i class="bi bi-bell"></i>
+        <span class="topbar-notif-dot"></span>
+      </button>
+      {% if user.is_authenticated %}
+      <div class="topbar-user d-none d-sm-block">
+        <div class="topbar-user-name">{{ user.first_name|default:user.username }}</div>
+        <div class="topbar-user-role">
+          {% if user.is_superuser %}Administrador
+          {% elif user.groups.first %}{{ user.groups.first.name }}
+          {% else %}Sin rol{% endif %}
+        </div>
+      </div>
+      {% endif %}
     </div>
-    {% endfor %}
-  {% endif %}
-  {% block content %}{% endblock %}
+  </header>
+
+  <main class="main-content">
+    {% if messages %}
+      {% for m in messages %}
+      <div class="alert alert-{{ m.tags }} alert-dismissible fade show">
+        {{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  (function () {
+    var sidebar = document.getElementById('sidebar');
+    var toggler = document.getElementById('sidebarToggler');
+    var backdrop = document.getElementById('sidebarBackdrop');
+
+    function closeSidebar() {
+      sidebar.classList.remove('show');
+      backdrop.classList.remove('show');
+    }
+
+    if (toggler) {
+      toggler.addEventListener('click', function () {
+        sidebar.classList.toggle('show');
+        backdrop.classList.toggle('show');
+      });
+    }
+    if (backdrop) {
+      backdrop.addEventListener('click', closeSidebar);
+    }
+    sidebar.querySelectorAll('.sidebar-sublink, .sidebar-menu > li > .sidebar-link:not(.sidebar-toggle)').forEach(function (link) {
+      link.addEventListener('click', closeSidebar);
+    });
+  })();
+</script>
 </body>
 </html>
