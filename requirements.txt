@@ -3,15 +3,18 @@ asttokens==3.0.1
 charset-normalizer==3.4.9
 colorama==0.4.6
 decorator==5.3.1
+dj-database-url==3.1.2
 Django==6.0.7
 django-extensions==4.1
 et_xmlfile==2.0.0
 executing==2.2.1
+gunicorn==26.0.0
 ipython==9.15.0
 ipython_pygments_lexers==1.1.1
 jedi==0.20.0
 matplotlib-inline==0.2.2
 openpyxl==3.1.5
+packaging==26.2
 parso==0.8.7
 pillow==12.3.0
 polib==1.2.0
@@ -26,3 +29,4 @@ stack-data==0.6.3
 traitlets==5.15.1
 tzdata==2026.3
 wcwidth==0.8.2
+whitenoise==6.12.0

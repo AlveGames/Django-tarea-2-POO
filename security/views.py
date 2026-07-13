@@ -135,12 +135,11 @@ class SecurityLoginView(LoginView):
     """Login con CBV. Reutiliza el template de la PARTE 9."""
     template_name = 'registration/login.html'
 
-    ROLES_INTERNOS = ['Administrador', 'Vendedor', 'Analista de Compras']
-
     def get_success_url(self):
-        user = self.request.user
-        if user.is_superuser or user.groups.filter(name__in=self.ROLES_INTERNOS).exists():
-            return reverse_lazy('billing:home')
+        # Todos los usuarios caen siempre al catálogo tras iniciar sesión,
+        # evitando que un login quede mostrando datos de una sesión previa
+        # (ej. dashboard). El acceso al Panel de Gestión sigue disponible
+        # desde el botón correspondiente en la navbar del shop.
         return reverse_lazy('shop:catalog')
 
 class SecurityLogoutView(LogoutView):

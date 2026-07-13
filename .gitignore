@@ -6,6 +6,10 @@ __pycache__/
 *.log
 local_settings.py
 media/
+staticfiles/
+
+# Environment variables (secretos: nunca versionar)
+.env
 
 # Virtual environment
 venv/

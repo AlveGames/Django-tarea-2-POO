@@ -27,10 +27,21 @@ ROLES = {
     'Cliente': [
         'view_product',
     ],
+
+    # El Gerente ve todos los módulos pero no puede modificar nada
+    'Gerente': [
+        # Solo permisos de VIEW en todo
+        'view_brand', 'view_productgroup', 'view_supplier', 'view_product',
+        'view_customer', 'view_invoice', 'view_invoicedetail',
+        'view_purchase', 'view_purchasedetail',
+        'view_cuotaventa', 'view_pagocuotaventa',
+        'view_cuotacompra', 'view_pagocuotacompra',
+        'view_user', 'view_group',
+    ],
 }
 
 class Command(BaseCommand):
-    help = 'Crea los 3 roles del sistema con sus permisos'
+    help = 'Crea los roles del sistema con sus permisos'
 
     def handle(self, *args, **kwargs):
         for role_name, codenames in ROLES.items():
