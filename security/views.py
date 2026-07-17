@@ -16,33 +16,39 @@ from .forms import UserRegisterForm, UserUpdateForm, GroupForm, PermissionForm
 # === MATRIZ DE PERMISOS POR MÓDULO (pantalla visual de roles) ===
 MODULOS = {
     'Gestión': {
+        # Marcas, Grupos y Proveedores no tienen funcionalidad de exportar/imprimir
         'Marcas': ['view_brand', 'add_brand', 'change_brand', 'delete_brand'],
         'Grupos': ['view_productgroup', 'add_productgroup', 'change_productgroup', 'delete_productgroup'],
         'Proveedores': ['view_supplier', 'add_supplier', 'change_supplier', 'delete_supplier'],
-        'Productos': ['view_product', 'add_product', 'change_product', 'delete_product'],
+        'Productos': ['view_product', 'add_product', 'change_product', 'delete_product', 'export_product', 'print_product'],
     },
     'Ventas': {
+        # Clientes no tiene funcionalidad de exportar/imprimir
         'Clientes': ['view_customer', 'add_customer', 'change_customer', 'delete_customer'],
-        'Facturas': ['view_invoice', 'add_invoice', 'change_invoice', 'delete_invoice'],
-        'Créditos Ventas': ['view_cuotaventa', 'add_cuotaventa', 'change_cuotaventa', 'delete_cuotaventa'],
+        'Facturas': ['view_invoice', 'add_invoice', 'change_invoice', 'delete_invoice', 'export_invoice', 'print_invoice'],
+        'Créditos Ventas': ['view_cuotaventa', 'add_cuotaventa', 'change_cuotaventa', 'delete_cuotaventa', 'export_cuotaventa', 'print_cuotaventa'],
     },
     'Compras': {
-        'Compras': ['view_purchase', 'add_purchase', 'change_purchase', 'delete_purchase'],
-        'Créditos Compras': ['view_cuotacompra', 'add_cuotacompra', 'change_cuotacompra', 'delete_cuotacompra'],
+        'Compras': ['view_purchase', 'add_purchase', 'change_purchase', 'delete_purchase', 'export_purchase', 'print_purchase'],
+        'Créditos Compras': ['view_cuotacompra', 'add_cuotacompra', 'change_cuotacompra', 'delete_cuotacompra', 'export_cuotacompra', 'print_cuotacompra'],
     },
     'Seguridad': {
+        # Usuarios y Roles no tienen permisos de exportar/imprimir definidos
         'Usuarios': ['view_user', 'add_user', 'change_user', 'delete_user'],
         'Roles': ['view_group', 'add_group', 'change_group', 'delete_group'],
     },
 }
 
-# Acciones mostradas en la grilla de cada módulo: las 4 acciones reales
-# de Django (view/add/change/delete). No hay permisos de exportar/imprimir.
+# Acciones mostradas en la grilla de cada módulo. Si un submódulo no tiene
+# el permiso export_x/print_x definido, esa celda simplemente no se
+# renderiza (ver build_permissions_matrix + template).
 ACCIONES = [
     ('view', 'Ver'),
     ('add', 'Crear'),
     ('change', 'Editar'),
     ('delete', 'Eliminar'),
+    ('export', 'Exportar'),
+    ('print', 'Imprimir'),
 ]
 
 

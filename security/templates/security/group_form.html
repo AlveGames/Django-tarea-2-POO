@@ -54,7 +54,7 @@
 
   .accion-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: .6rem .5rem;
   }
   .accion-check {
@@ -107,7 +107,7 @@
       <div class="categoria-title">{{ categoria.name }}</div>
       <div class="row g-3 mb-2">
         {% for sub in categoria.submodulos %}
-        <div class="col-md-6 col-xl-4">
+        <div class="col-md-6">
           <div class="modulo-card">
             <div class="modulo-card-header modulo-tooltip"
                  data-bs-toggle="tooltip"
@@ -126,12 +126,14 @@
             <div class="modulo-card-body" id="body-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
               <div class="accion-grid">
                 {% for accion in sub.acciones %}
+                {% if accion.permission %}
                 <label class="accion-check">
                   <input type="checkbox" class="form-check-input permiso-check"
                          name="permissions" value="{{ accion.permission.id }}"
                          {% if accion.checked %}checked{% endif %}>
                   {{ accion.label }}
                 </label>
+                {% endif %}
                 {% endfor %}
               </div>
             </div>

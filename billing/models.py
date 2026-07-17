@@ -61,6 +61,10 @@ class Product(models.Model):
         verbose_name = 'Product'
         verbose_name_plural = 'Products'
         ordering = ['name']
+        permissions = [
+            ('export_product', 'Can export product'),
+            ('print_product', 'Can print product'),
+        ]
     def __str__(self): return f'{self.name} ({self.brand.name})'
     @property
     def balance(self):
@@ -128,7 +132,12 @@ class Invoice(models.Model):
     numero_autorizacion = models.CharField(max_length=49, blank=True)
     clave_acceso = models.CharField(max_length=49, blank=True)
     xml_generado = models.BooleanField(default=False)
-    class Meta: ordering = ['-invoice_date']
+    class Meta:
+        ordering = ['-invoice_date']
+        permissions = [
+            ('export_invoice', 'Can export invoice'),
+            ('print_invoice', 'Can print invoice'),
+        ]
     def __str__(self): return f'Invoice #{self.id} - {self.customer}'
 
 class InvoiceDetail(models.Model):

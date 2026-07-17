@@ -4,15 +4,19 @@
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
   <h2 class="mb-0">Cuotas de la Factura</h2>
   <div class="d-flex gap-2 flex-wrap">
+    {% if perms.creditos_ventas.export_cuotaventa %}
     <a href="?format=pdf" class="btn btn-outline-danger" title="Exportar a PDF">
       <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
     </a>
     <a href="?format=xlsx" class="btn btn-outline-success" title="Exportar a Excel">
       <i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel
     </a>
+    {% endif %}
+    {% if perms.creditos_ventas.print_cuotaventa %}
     <a href="{% url 'creditos_ventas:factura_detail' factura.pk %}" class="btn btn-outline-dark">
       <i class="bi bi-printer"></i> Ver Factura / Imprimir
     </a>
+    {% endif %}
   </div>
 </div>
 

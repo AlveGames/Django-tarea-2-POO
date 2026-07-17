@@ -47,9 +47,11 @@
 
         <div class="d-flex gap-2 no-print">
           <a href="{% url 'creditos_compras:cuota_list' compra.pk %}" class="btn btn-secondary">Volver a Cuotas</a>
+          {% if perms.creditos_compras.print_cuotacompra %}
           <button type="button" class="btn btn-primary" onclick="window.print()">
             <i class="bi bi-printer"></i> Imprimir
           </button>
+          {% endif %}
         </div>
       </div>
     </div>

@@ -12,6 +12,11 @@ class CuotaCompra(models.Model):
         choices=[("PENDIENTE", "PENDIENTE"), ("PAGADA", "PAGADA")],
         default="PENDIENTE"
     )
+    class Meta:
+        permissions = [
+            ('export_cuotacompra', 'Can export cuota compra'),
+            ('print_cuotacompra', 'Can print cuota compra'),
+        ]
     def __str__(self):
         return f"Cuota {self.numero} - {self.compra}"
 

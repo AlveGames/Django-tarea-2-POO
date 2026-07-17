@@ -30,6 +30,10 @@ class Purchase(models.Model):
         verbose_name = 'Purchase'
         verbose_name_plural = 'Purchases'
         ordering = ['-purchase_date']
+        permissions = [
+            ('export_purchase', 'Can export purchase'),
+            ('print_purchase', 'Can print purchase'),
+        ]
 
     def __str__(self):
         return f'Purchase #{self.id} - {self.supplier}'

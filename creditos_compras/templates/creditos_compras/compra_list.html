@@ -7,6 +7,7 @@
   <i class="bi bi-plus-lg"></i> Nueva Compra
 </a>
 {% endif %}
+{% if perms.creditos_compras.export_cuotacompra %}
 <a href="?{% for k, v in request.GET.items %}{% if k != 'format' %}{{ k }}={{ v }}&{% endif %}{% endfor %}format=pdf"
    class="btn btn-outline-danger mb-3" title="Exportar a PDF">
   <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
@@ -15,6 +16,7 @@
    class="btn btn-outline-success mb-3" title="Exportar a Excel">
   <i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel
 </a>
+{% endif %}
 <a href="{% url 'creditos_compras:cuotas_pendientes' %}" class="btn btn-outline-secondary mb-3">
   <i class="bi bi-calendar-event"></i> Cuotas Pendientes
 </a>

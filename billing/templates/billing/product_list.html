@@ -43,6 +43,7 @@
       <span class="badge bg-primary ms-1" id="col-counter-badge">…</span>
     </button>
 
+    {% if perms.billing.export_product %}
     {# Exportar PDF #}
     <a id="btn-export-pdf"
        href="?{% for k, v in request.GET.items %}{% if k != 'format' and k != 'page' and k != 'cols' %}{{ k }}={{ v }}&{% endif %}{% endfor %}format=pdf"
@@ -66,6 +67,7 @@
       </svg>
       Excel
     </a>
+    {% endif %}
 
     {% if perms.billing.add_product %}
     <a href="{% url 'billing:product_create' %}" class="btn btn-primary">

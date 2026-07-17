@@ -5,9 +5,11 @@
   <div class="d-flex justify-content-between align-items-center mb-3 no-print">
     <h2>Factura #{{ invoice.pk }}</h2>
     <div>
+      {% if perms.creditos_ventas.print_cuotaventa %}
       <button type="button" class="btn btn-outline-dark" onclick="window.print()">
         <i class="bi bi-printer"></i> Imprimir
       </button>
+      {% endif %}
       {% if invoice.tipo_pago == 'CREDITO' %}
       <a href="{% url 'creditos_ventas:cuota_list' invoice.pk %}" class="btn btn-outline-secondary">
         <i class="bi bi-list-check"></i> Ver Cuotas

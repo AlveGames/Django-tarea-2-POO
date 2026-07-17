@@ -15,6 +15,9 @@ ROLES = {
         'view_product',
         # Créditos de ventas (facturas a crédito y sus cuotas)
         'view_cuotaventa', 'add_cuotaventa', 'change_cuotaventa',
+        # Exportar/imprimir facturas y cuotas de venta
+        'export_invoice', 'print_invoice',
+        'export_cuotaventa', 'print_cuotaventa',
     ],
 
     # El Analista de Compras gestiona el catálogo completo
@@ -25,6 +28,9 @@ ROLES = {
         'view_product', 'add_product', 'change_product', 'delete_product',
         # Créditos de compras (compras a crédito y sus cuotas)
         'view_cuotacompra', 'add_cuotacompra', 'change_cuotacompra', 'delete_cuotacompra',
+        # Exportar/imprimir compras y cuotas de compra
+        'export_purchase', 'print_purchase',
+        'export_cuotacompra', 'print_cuotacompra',
     ],
 
     # El Cliente solo navega el catálogo de la tienda
@@ -41,6 +47,12 @@ ROLES = {
         'view_cuotaventa', 'view_pagocuotaventa',
         'view_cuotacompra', 'view_pagocuotacompra',
         'view_user', 'view_group',
+        # Exportar/imprimir, para reportes (solo los módulos que lo soportan)
+        'export_product', 'print_product',
+        'export_invoice', 'print_invoice',
+        'export_purchase', 'print_purchase',
+        'export_cuotaventa', 'print_cuotaventa',
+        'export_cuotacompra', 'print_cuotacompra',
     ],
 }
 
