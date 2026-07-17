@@ -67,9 +67,11 @@
       Excel
     </a>
 
+    {% if perms.billing.add_product %}
     <a href="{% url 'billing:product_create' %}" class="btn btn-primary">
       + Nuevo Producto
     </a>
+    {% endif %}
 
   </div>
 </div>
@@ -375,8 +377,12 @@
             </svg>
             Ver
           </a>
+          {% if perms.billing.change_product %}
           <a href="{% url 'billing:product_update' item.pk %}" class="btn btn-sm btn-warning">Editar</a>
+          {% endif %}
+          {% if perms.billing.delete_product %}
           <a href="{% url 'billing:product_delete' item.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+          {% endif %}
         </td>
 
       </tr>

@@ -2,7 +2,9 @@
 {% block title %}Grupos de Productos{% endblock %}
 {% block content %}
 <h2>Grupos de Productos</h2>
+{% if perms.billing.add_productgroup %}
 <a href="{% url 'billing:productgroup_create' %}" class="btn btn-primary mb-3">+ Nuevo Grupo de Productos</a>
+{% endif %}
 <div class="table-container">
 <table class="table table-striped table-hover">
   <thead class="table-dark">
@@ -14,8 +16,12 @@
       <td>{{ item.name }}</td>
       <td>{{ item.is_active }}</td>
       <td>
+        {% if perms.billing.change_productgroup %}
         <a href="{% url 'billing:productgroup_update' item.pk %}" class="btn btn-sm btn-warning">Editar</a>
+        {% endif %}
+        {% if perms.billing.delete_productgroup %}
         <a href="{% url 'billing:productgroup_delete' item.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+        {% endif %}
       </td>
     </tr>
     {% empty %}

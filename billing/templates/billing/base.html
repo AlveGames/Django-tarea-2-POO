@@ -54,41 +54,59 @@
 
       {% if user.is_authenticated %}
 
-        {% if user|has_group:'Analista de Compras' or user|has_group:'Administrador' or user|has_group:'Gerente' %}
+        {% if perms.billing.view_brand or perms.billing.add_brand or perms.billing.view_productgroup or perms.billing.add_productgroup or perms.billing.view_supplier or perms.billing.add_supplier or perms.billing.view_product or perms.billing.add_product %}
         <li class="sidebar-group">
           <a class="sidebar-link sidebar-toggle {% if '/brands/' in request.path or '/groups/' in request.path or '/suppliers/' in request.path or '/products/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuGestion" aria-expanded="{% if '/brands/' in request.path or '/groups/' in request.path or '/suppliers/' in request.path or '/products/' in request.path %}true{% else %}false{% endif %}">
             <i class="bi bi-box-seam"></i><span>{% trans "Gestión" %}</span><i class="bi bi-chevron-down sidebar-caret"></i>
           </a>
           <ul class="collapse sidebar-submenu {% if '/brands/' in request.path or '/groups/' in request.path or '/suppliers/' in request.path or '/products/' in request.path %}show{% endif %}" id="menuGestion">
+            {% if perms.billing.view_brand or perms.billing.add_brand %}
             <li><a class="sidebar-sublink {% if request.path == brand_list_url %}active{% endif %}" href="{{ brand_list_url }}">{% trans "Marcas" %}</a></li>
+            {% endif %}
+            {% if perms.billing.view_productgroup or perms.billing.add_productgroup %}
             <li><a class="sidebar-sublink {% if request.path == productgroup_list_url %}active{% endif %}" href="{{ productgroup_list_url }}">{% trans "Grupos" %}</a></li>
+            {% endif %}
+            {% if perms.billing.view_supplier or perms.billing.add_supplier %}
             <li><a class="sidebar-sublink {% if request.path == supplier_list_url %}active{% endif %}" href="{{ supplier_list_url }}">{% trans "Proveedores" %}</a></li>
+            {% endif %}
+            {% if perms.billing.view_product or perms.billing.add_product %}
             <li><a class="sidebar-sublink {% if request.path == product_list_url %}active{% endif %}" href="{{ product_list_url }}">{% trans "Productos" %}</a></li>
+            {% endif %}
           </ul>
         </li>
         {% endif %}
 
-        {% if user|has_group:'Vendedor' or user|has_group:'Administrador' or user|has_group:'Gerente' %}
+        {% if perms.billing.view_customer or perms.billing.add_customer or perms.billing.view_invoice or perms.billing.add_invoice or perms.creditos_ventas.view_cuotaventa %}
         <li class="sidebar-group">
           <a class="sidebar-link sidebar-toggle {% if '/customers/' in request.path or '/invoices/' in request.path or '/creditos-ventas/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuVentas" aria-expanded="{% if '/customers/' in request.path or '/invoices/' in request.path or '/creditos-ventas/' in request.path %}true{% else %}false{% endif %}">
             <i class="bi bi-cash-coin"></i><span>{% trans "Ventas" %}</span><i class="bi bi-chevron-down sidebar-caret"></i>
           </a>
           <ul class="collapse sidebar-submenu {% if '/customers/' in request.path or '/invoices/' in request.path or '/creditos-ventas/' in request.path %}show{% endif %}" id="menuVentas">
+            {% if perms.billing.view_customer or perms.billing.add_customer %}
             <li><a class="sidebar-sublink {% if request.path == customer_list_url %}active{% endif %}" href="{{ customer_list_url }}">{% trans "Clientes" %}</a></li>
+            {% endif %}
+            {% if perms.billing.view_invoice or perms.billing.add_invoice %}
             <li><a class="sidebar-sublink {% if request.path == invoice_list_url %}active{% endif %}" href="{{ invoice_list_url }}">{% trans "Facturas" %}</a></li>
+            {% endif %}
+            {% if perms.creditos_ventas.view_cuotaventa %}
             <li><a class="sidebar-sublink {% if request.path == factura_list_url %}active{% endif %}" href="{{ factura_list_url }}">Créditos Ventas</a></li>
+            {% endif %}
           </ul>
         </li>
         {% endif %}
 
-        {% if user|has_group:'Analista de Compras' or user|has_group:'Administrador' or user|has_group:'Gerente' %}
+        {% if perms.purchasing.view_purchase or perms.purchasing.add_purchase or perms.creditos_compras.view_cuotacompra %}
         <li class="sidebar-group">
           <a class="sidebar-link sidebar-toggle {% if '/purchases/' in request.path or '/creditos-compras/' in request.path %}active{% endif %}" href="#" data-bs-toggle="collapse" data-bs-target="#menuCompras" aria-expanded="{% if '/purchases/' in request.path or '/creditos-compras/' in request.path %}true{% else %}false{% endif %}">
             <i class="bi bi-cart3"></i><span>{% trans "Compras" %}</span><i class="bi bi-chevron-down sidebar-caret"></i>
           </a>
           <ul class="collapse sidebar-submenu {% if '/purchases/' in request.path or '/creditos-compras/' in request.path %}show{% endif %}" id="menuCompras">
+            {% if perms.purchasing.view_purchase or perms.purchasing.add_purchase %}
             <li><a class="sidebar-sublink {% if request.path == purchase_list_url %}active{% endif %}" href="{{ purchase_list_url }}">{% trans "Compras" %}</a></li>
+            {% endif %}
+            {% if perms.creditos_compras.view_cuotacompra %}
             <li><a class="sidebar-sublink {% if request.path == compra_list_url %}active{% endif %}" href="{{ compra_list_url }}">Créditos Compras</a></li>
+            {% endif %}
           </ul>
         </li>
         {% endif %}

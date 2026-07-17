@@ -13,6 +13,8 @@ ROLES = {
         'view_invoice', 'add_invoice', 'change_invoice',
         'view_invoicedetail', 'add_invoicedetail', 'change_invoicedetail',
         'view_product',
+        # Créditos de ventas (facturas a crédito y sus cuotas)
+        'view_cuotaventa', 'add_cuotaventa', 'change_cuotaventa',
     ],
 
     # El Analista de Compras gestiona el catálogo completo
@@ -21,6 +23,8 @@ ROLES = {
         'view_productgroup', 'add_productgroup', 'change_productgroup', 'delete_productgroup',
         'view_supplier', 'add_supplier', 'change_supplier', 'delete_supplier',
         'view_product', 'add_product', 'change_product', 'delete_product',
+        # Créditos de compras (compras a crédito y sus cuotas)
+        'view_cuotacompra', 'add_cuotacompra', 'change_cuotacompra', 'delete_cuotacompra',
     ],
 
     # El Cliente solo navega el catálogo de la tienda

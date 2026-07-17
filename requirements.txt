@@ -12,6 +12,7 @@ gunicorn==26.0.0
 ipython==9.15.0
 ipython_pygments_lexers==1.1.1
 jedi==0.20.0
+lxml==6.1.1
 matplotlib-inline==0.2.2
 openpyxl==3.1.5
 packaging==26.2
@@ -23,6 +24,7 @@ psutil==7.2.2
 pure_eval==0.2.3
 Pygments==2.20.0
 python-dotenv==1.2.2
+qrcode==8.2
 reportlab==5.0.0
 sqlparse==0.5.5
 stack-data==0.6.3

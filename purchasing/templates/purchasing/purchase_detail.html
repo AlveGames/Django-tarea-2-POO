@@ -51,7 +51,9 @@
             </tfoot>
         </table>
         <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary">Volver a la lista</a>
+        {% if perms.purchasing.delete_purchase %}
         <a href="{% url 'purchasing:purchase_delete' purchase.pk %}" class="btn btn-danger">Eliminar</a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

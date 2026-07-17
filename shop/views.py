@@ -4,11 +4,14 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView, UpdateView
 
 from billing.models import Customer, Invoice, InvoiceDetail, Product, ProductGroup
+from billing.utils import generar_factura_electronica
 from billing.views import send_invoice_email
 from shared.decorators import group_required
 from shared.mixins import GroupRequiredMixin
@@ -61,6 +64,72 @@ def _generate_order_number():
             return order_number
 
 
+def _generar_referencia_paypal():
+    return 'PAY-' + ''.join(random.choices(string.digits, k=12))
+
+
+def _validar_stock(cart):
+    """Devuelve una lista de mensajes de error por productos sin stock suficiente."""
+    errors = []
+    for product_id, item in cart.items():
+        product = get_object_or_404(Product, pk=product_id)
+        if item['quantity'] > product.stock:
+            errors.append(
+                f'Stock insuficiente para "{product.name}": '
+                f'solicitado {item["quantity"]}, disponible {product.stock}.'
+            )
+    return errors
+
+
+def _crear_orden(request, cd, cart, payment_method, card_last4='', payment_reference=''):
+    """Crea la ShopOrder + detalle, descuenta stock, limpia el carrito y genera
+    la factura/correo asociados. Usado tanto por process_payment (tarjeta/
+    transferencia) como por el flujo de PayPal simulado."""
+    totals = _cart_totals(cart)
+
+    order = ShopOrder.objects.create(
+        user=request.user,
+        full_name=cd['full_name'],
+        email=cd['email'],
+        phone=cd['phone'],
+        address=cd['address'],
+        dni=cd['dni'],
+        order_number=_generate_order_number(),
+        status='paid',
+        payment_method=payment_method,
+        card_last4=card_last4,
+        payment_reference=payment_reference,
+        payment_status='approved',
+        subtotal=totals['subtotal'],
+        subtotal_iva=totals['subtotal_iva'],
+        iva_amount=totals['iva_amount'],
+        total=totals['total'],
+    )
+
+    for product_id, item in cart.items():
+        product = get_object_or_404(Product, pk=product_id)
+        quantity = item['quantity']
+        ShopOrderDetail.objects.create(
+            order=order,
+            product=product,
+            quantity=quantity,
+            original_price=Decimal(item['original_price']),
+            discount=Decimal(item['discount']),
+            unit_price=Decimal(item['unit_price']),
+            subtotal=Decimal(item['subtotal']),
+        )
+        product.stock -= quantity
+        product.save(update_fields=['stock'])
+
+    request.session['cart'] = {}
+    request.session.modified = True
+
+    invoice = crear_factura_desde_shop(order)
+    send_invoice_email(invoice)
+
+    return order
+
+
 def crear_factura_desde_shop(shop_order):
     """Genera en billing la Invoice correspondiente a una ShopOrder pagada."""
     name_parts = shop_order.full_name.split()
@@ -102,6 +171,8 @@ def crear_factura_desde_shop(shop_order):
 
     shop_order.invoice = invoice
     shop_order.save(update_fields=['invoice'])
+
+    generar_factura_electronica(invoice)
 
     return invoice
 
@@ -262,19 +333,13 @@ def process_payment(request):
     if payment_method == 'card':
         card_last4 = cd['card_number'].replace(' ', '')[-4:]
     elif payment_method == 'paypal':
-        payment_reference = cd['paypal_email']
+        # El flujo normal de PayPal pasa por PaypalConfirmView; esta rama solo
+        # cubre un POST directo a process_payment con payment_method=paypal.
+        payment_reference = _generar_referencia_paypal()
     elif payment_method == 'transfer':
         payment_reference = cd['bank_account']
 
-    # Validar stock disponible antes de confirmar la orden
-    stock_errors = []
-    for product_id, item in cart.items():
-        product = get_object_or_404(Product, pk=product_id)
-        if item['quantity'] > product.stock:
-            stock_errors.append(
-                f'Stock insuficiente para "{product.name}": '
-                f'solicitado {item["quantity"]}, disponible {product.stock}.'
-            )
+    stock_errors = _validar_stock(cart)
     if stock_errors:
         for msg in stock_errors:
             messages.error(request, msg)
@@ -282,50 +347,97 @@ def process_payment(request):
         context.update(_cart_totals(cart))
         return render(request, 'shop/checkout.html', context)
 
-    totals = _cart_totals(cart)
-
-    order = ShopOrder.objects.create(
-        user=request.user,
-        full_name=cd['full_name'],
-        email=cd['email'],
-        phone=cd['phone'],
-        address=cd['address'],
-        dni=cd['dni'],
-        order_number=_generate_order_number(),
-        status='paid',
-        payment_method=payment_method,
-        card_last4=card_last4,
-        payment_reference=payment_reference,
-        payment_status='approved',
-        subtotal=totals['subtotal'],
-        subtotal_iva=totals['subtotal_iva'],
-        iva_amount=totals['iva_amount'],
-        total=totals['total'],
+    order = _crear_orden(
+        request, cd, cart, payment_method,
+        card_last4=card_last4, payment_reference=payment_reference,
     )
-
-    for product_id, item in cart.items():
-        product = get_object_or_404(Product, pk=product_id)
-        quantity = item['quantity']
-        ShopOrderDetail.objects.create(
-            order=order,
-            product=product,
-            quantity=quantity,
-            original_price=Decimal(item['original_price']),
-            discount=Decimal(item['discount']),
-            unit_price=Decimal(item['unit_price']),
-            subtotal=Decimal(item['subtotal']),
-        )
-        product.stock -= quantity
-        product.save(update_fields=['stock'])
-
-    request.session['cart'] = {}
-    request.session.modified = True
-
-    invoice = crear_factura_desde_shop(order)
-    send_invoice_email(invoice)
 
     messages.success(request, f'¡Pago aprobado! Orden {order.order_number} creada.')
     return redirect('shop:receipt', pk=order.pk)
+
+
+@group_required(*ROLES_TIENDA, redirect_url='shop:catalog')
+def paypal_stage(request):
+    """Valida los datos de envío y los deja en sesión antes de abrir la
+    ventana emergente de PayPal simulado (el pago aún no se confirma aquí)."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+
+    cart = _get_cart(request)
+    if not cart:
+        return JsonResponse({'success': False, 'errors': {'__all__': 'Tu carrito está vacío.'}})
+
+    data = request.POST.copy()
+    data['payment_method'] = 'paypal'
+    form = CheckoutForm(data)
+    if not form.is_valid():
+        return JsonResponse({'success': False, 'errors': form.errors})
+
+    cd = form.cleaned_data
+    request.session['paypal_checkout_data'] = {
+        'full_name': cd['full_name'],
+        'email': cd['email'],
+        'phone': cd['phone'],
+        'address': cd['address'],
+        'dni': cd['dni'],
+    }
+    request.session.modified = True
+    return JsonResponse({'success': True})
+
+
+class PaypalView(GroupRequiredMixin, View):
+    """Ventana emergente de pago simulado (NO es el login real de PayPal:
+    no pide credenciales, solo confirma el monto a pagar)."""
+    group_required = ROLES_TIENDA
+    group_redirect_url = 'shop:catalog'
+
+    def get(self, request):
+        cart = _get_cart(request)
+        if 'paypal_checkout_data' not in request.session or not cart:
+            return render(request, 'shop/paypal.html', {
+                'error': 'No se encontró una compra en curso. Cierra esta ventana e inténtalo de nuevo.',
+            })
+        totals = _cart_totals(cart)
+        return render(request, 'shop/paypal.html', {'total': totals['total']})
+
+    def post(self, request):
+        if 'paypal_checkout_data' not in request.session or not _get_cart(request):
+            return render(request, 'shop/paypal.html', {
+                'error': 'No se encontró una compra en curso. Cierra esta ventana e inténtalo de nuevo.',
+            })
+        return redirect('shop:paypal_confirm')
+
+
+class PaypalConfirmView(GroupRequiredMixin, View):
+    group_required = ROLES_TIENDA
+    group_redirect_url = 'shop:catalog'
+
+    def get(self, request):
+        cd = request.session.get('paypal_checkout_data')
+        cart = _get_cart(request)
+
+        if not cd or not cart:
+            return render(request, 'shop/paypal_confirm.html', {
+                'error': 'No se encontró una compra en curso. Cierra esta ventana e inténtalo de nuevo.',
+            })
+
+        stock_errors = _validar_stock(cart)
+        if stock_errors:
+            del request.session['paypal_checkout_data']
+            request.session.modified = True
+            return render(request, 'shop/paypal_confirm.html', {
+                'error': ' '.join(stock_errors),
+            })
+
+        order = _crear_orden(
+            request, cd, cart, 'paypal',
+            payment_reference=_generar_referencia_paypal(),
+        )
+
+        del request.session['paypal_checkout_data']
+        request.session.modified = True
+
+        return render(request, 'shop/paypal_confirm.html', {'order': order})
 
 
 class OrderReceiptView(LoginRequiredMixin, DetailView):

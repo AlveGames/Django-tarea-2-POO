@@ -2,9 +2,11 @@
 {% block title %}Créditos Compras{% endblock %}
 {% block content %}
 <h2>Compras</h2>
+{% if perms.creditos_compras.add_cuotacompra %}
 <a href="{% url 'creditos_compras:compra_create' %}" class="btn btn-primary mb-3">
   <i class="bi bi-plus-lg"></i> Nueva Compra
 </a>
+{% endif %}
 <a href="?{% for k, v in request.GET.items %}{% if k != 'format' %}{{ k }}={{ v }}&{% endif %}{% endfor %}format=pdf"
    class="btn btn-outline-danger mb-3" title="Exportar a PDF">
   <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
@@ -94,12 +96,16 @@
         <a href="{% url 'creditos_compras:compra_detail' compra.pk %}" class="btn btn-sm btn-outline-dark" title="Detalle / Imprimir">
           <i class="bi bi-printer"></i>
         </a>
+        {% if perms.creditos_compras.change_cuotacompra %}
         <a href="{% url 'creditos_compras:compra_update' compra.pk %}" class="btn btn-sm btn-warning" title="Editar">
           <i class="bi bi-pencil"></i>
         </a>
+        {% endif %}
+        {% if perms.creditos_compras.delete_cuotacompra %}
         <a href="{% url 'creditos_compras:compra_delete' compra.pk %}" class="btn btn-sm btn-danger" title="Eliminar">
           <i class="bi bi-trash"></i>
         </a>
+        {% endif %}
         {% if compra.tipo_pago == 'CREDITO' %}
         <a href="{% url 'creditos_compras:cuota_list' compra.pk %}" class="btn btn-sm btn-info" title="Ver Cuotas">
           <i class="bi bi-list-check"></i> Cuotas

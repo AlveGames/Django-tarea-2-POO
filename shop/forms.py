@@ -48,12 +48,6 @@ class CheckoutForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CVV', 'inputmode': 'numeric'}),
     )
 
-    # PayPal
-    paypal_email = forms.EmailField(
-        required=False,
-        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'correo@paypal.com'}),
-    )
-
     # Transferencia bancaria
     bank_account = forms.CharField(
         max_length=30, required=False,
@@ -72,9 +66,6 @@ class CheckoutForm(forms.Form):
                 self.add_error('card_expiry', 'Ingresa la fecha de expiración.')
             if not cleaned_data.get('card_cvv'):
                 self.add_error('card_cvv', 'Ingresa el CVV.')
-        elif method == 'paypal':
-            if not cleaned_data.get('paypal_email'):
-                self.add_error('paypal_email', 'Ingresa tu correo de PayPal.')
         elif method == 'transfer':
             if not cleaned_data.get('bank_account'):
                 self.add_error('bank_account', 'Ingresa el número de cuenta.')

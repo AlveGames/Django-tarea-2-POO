@@ -124,6 +124,10 @@ class Invoice(models.Model):
         choices=[("PENDIENTE", "PENDIENTE"), ("PAGADA", "PAGADA")],
         default="PENDIENTE"
     )
+    # Facturación electrónica simulada (estilo SRI Ecuador)
+    numero_autorizacion = models.CharField(max_length=49, blank=True)
+    clave_acceso = models.CharField(max_length=49, blank=True)
+    xml_generado = models.BooleanField(default=False)
     class Meta: ordering = ['-invoice_date']
     def __str__(self): return f'Invoice #{self.id} - {self.customer}'
 

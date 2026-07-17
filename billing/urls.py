@@ -35,10 +35,13 @@ urlpatterns = [
     path('customers/create/', views.CustomerCreateView.as_view(), name='customer_create'),
     path('customers/<int:pk>/edit/', views.CustomerUpdateView.as_view(), name='customer_update'),
     path('customers/<int:pk>/delete/', views.CustomerDeleteView.as_view(), name='customer_delete'),
+    path('customers/crear-ajax/', views.crear_cliente_ajax, name='crear_cliente_ajax'),
     # Invoice
     # Invoice (FBV)
     path('invoices/', views.invoice_list, name='invoice_list'),
     path('invoices/create/', views.invoice_create, name='invoice_create'),
     path('invoices/<int:pk>/', views.invoice_detail, name='invoice_detail'),
     path('invoices/<int:pk>/delete/', views.invoice_delete, name='invoice_delete'),
+    path('invoices/<int:pk>/xml/', views.descargar_xml, name='descargar_xml'),
+    path('invoices/<int:pk>/qr/', views.invoice_qr, name='invoice_qr'),
 ]

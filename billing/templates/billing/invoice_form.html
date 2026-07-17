@@ -8,7 +8,13 @@
             {% csrf_token %}
             <div class="mb-3">
                 <label class="form-label fw-bold">Cliente</label>
-                {{ form.customer }}
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="flex-grow-1">{{ form.customer }}</div>
+                    <button type="button" class="btn btn-success btn-sm text-nowrap"
+                            data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
+                        <i class="bi bi-person-plus"></i> + Nuevo Cliente
+                    </button>
+                </div>
                 {% for error in form.customer.errors %}
                 <div class="text-danger">{{ error }}</div>
                 {% endfor %}
@@ -253,6 +259,141 @@
   });
 
   updateGrandTotal();
+})();
+</script>
+
+{# ==== Modal: crear cliente sin salir del formulario de factura ==== #}
+<div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-labelledby="modalNuevoClienteLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalNuevoClienteLabel"><i class="bi bi-person-plus me-1"></i> Nuevo Cliente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="modalClienteAlert" class="alert d-none" role="alert"></div>
+        <form id="formNuevoCliente" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Cédula/RUC</label>
+            {{ customer_form.dni }}
+            <div class="text-danger small" data-field-error="dni"></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nombres</label>
+            {{ customer_form.first_name }}
+            <div class="text-danger small" data-field-error="first_name"></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Apellidos</label>
+            {{ customer_form.last_name }}
+            <div class="text-danger small" data-field-error="last_name"></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Correo</label>
+            {{ customer_form.email }}
+            <div class="text-danger small" data-field-error="email"></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Teléfono</label>
+            {{ customer_form.phone }}
+            <div class="text-danger small" data-field-error="phone"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" id="btnGuardarCliente" class="btn btn-success">
+          <i class="bi bi-check2"></i> Guardar Cliente
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var modalEl = document.getElementById('modalNuevoCliente');
+  var formCliente = document.getElementById('formNuevoCliente');
+  var btnGuardar = document.getElementById('btnGuardarCliente');
+  var alertBox = document.getElementById('modalClienteAlert');
+  var customerSelect = document.getElementById('id_customer');
+
+  function limpiarErrores() {
+    formCliente.querySelectorAll('[data-field-error]').forEach(function (el) {
+      el.textContent = '';
+    });
+    formCliente.querySelectorAll('.is-invalid').forEach(function (el) {
+      el.classList.remove('is-invalid');
+    });
+  }
+
+  function mostrarAlerta(tipo, mensaje) {
+    alertBox.classList.remove('d-none', 'alert-success', 'alert-danger');
+    alertBox.classList.add('alert-' + tipo);
+    alertBox.textContent = mensaje;
+  }
+
+  function mostrarErrores(errorsJson) {
+    var errors = JSON.parse(errorsJson);
+    Object.keys(errors).forEach(function (field) {
+      var input = formCliente.querySelector('[name="' + field + '"]');
+      var errBox = formCliente.querySelector('[data-field-error="' + field + '"]');
+      var mensaje = errors[field].map(function (e) { return e.message; }).join(' ');
+      if (input) input.classList.add('is-invalid');
+      if (errBox) {
+        errBox.textContent = mensaje;
+      } else {
+        mostrarAlerta('danger', mensaje);
+      }
+    });
+  }
+
+  btnGuardar.addEventListener('click', function () {
+    limpiarErrores();
+    alertBox.classList.add('d-none');
+    btnGuardar.disabled = true;
+
+    var formData = new FormData(formCliente);
+
+    fetch('{% url "billing:crear_cliente_ajax" %}', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+      body: formData,
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.success) {
+          var option = document.createElement('option');
+          option.value = data.id;
+          option.textContent = data.nombre;
+          option.selected = true;
+          customerSelect.appendChild(option);
+          customerSelect.value = data.id;
+
+          mostrarAlerta('success', 'Cliente "' + data.nombre + '" creado correctamente.');
+
+          setTimeout(function () {
+            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+            formCliente.reset();
+            limpiarErrores();
+            alertBox.classList.add('d-none');
+          }, 900);
+        } else if (data.errors) {
+          mostrarErrores(data.errors);
+        } else {
+          mostrarAlerta('danger', 'No se pudo crear el cliente. Intenta de nuevo.');
+        }
+      })
+      .catch(function () {
+        mostrarAlerta('danger', 'Ocurrió un error de conexión al crear el cliente.');
+      })
+      .finally(function () {
+        btnGuardar.disabled = false;
+      });
+  });
 })();
 </script>
 {% endblock %}

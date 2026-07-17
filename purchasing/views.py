@@ -1,7 +1,7 @@
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import F
 from decimal import Decimal
 from .models import Purchase, PurchaseDetail
@@ -37,6 +37,7 @@ def purchase_list(request):
     })
 
 @login_required
+@permission_required('purchasing.add_purchase', raise_exception=True)
 def purchase_create(request):
     if request.method == 'POST':
         form = PurchaseForm(request.POST)
@@ -75,6 +76,7 @@ def purchase_detail(request, pk):
     return render(request, 'purchasing/purchase_detail.html', {'purchase': purchase})
 
 @login_required
+@permission_required('purchasing.delete_purchase', raise_exception=True)
 def purchase_delete(request, pk):
     purchase = get_object_or_404(Purchase, pk=pk)
     if request.method == 'POST':

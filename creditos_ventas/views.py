@@ -3,7 +3,7 @@ from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Max, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -89,10 +89,12 @@ class FacturaVentaDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class FacturaVentaCreateView(LoginRequiredMixin, CreateView):
+class FacturaVentaCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Invoice
     form_class = FacturaVentaForm
     template_name = 'creditos_ventas/factura_form.html'
+    permission_required = 'creditos_ventas.add_cuotaventa'
+    raise_exception = True
 
     def form_valid(self, form):
         invoice = form.save(commit=False)
@@ -113,11 +115,13 @@ class FacturaVentaCreateView(LoginRequiredMixin, CreateView):
         return redirect('creditos_ventas:factura_list')
 
 
-class FacturaVentaUpdateView(LoginRequiredMixin, UpdateView):
+class FacturaVentaUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Invoice
     form_class = FacturaVentaForm
     template_name = 'creditos_ventas/factura_form.html'
     success_url = reverse_lazy('creditos_ventas:factura_list')
+    permission_required = 'creditos_ventas.change_cuotaventa'
+    raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -250,10 +254,12 @@ class FacturaVentaUpdateView(LoginRequiredMixin, UpdateView):
         return redirect(self.success_url)
 
 
-class FacturaVentaDeleteView(LoginRequiredMixin, DeleteView):
+class FacturaVentaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Invoice
     template_name = 'creditos_ventas/factura_confirm_delete.html'
     success_url = reverse_lazy('creditos_ventas:factura_list')
+    permission_required = 'creditos_ventas.delete_cuotaventa'
+    raise_exception = True
 
     def post(self, request, *args, **kwargs):
         # Django 6's BaseDeleteView.post() llama a form_valid() -> object.delete()
@@ -283,7 +289,9 @@ class FacturaVentaDeleteView(LoginRequiredMixin, DeleteView):
 
 # === CUOTAS (CBV) ===
 
-class GenerarCuotasView(LoginRequiredMixin, View):
+class GenerarCuotasView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'creditos_ventas.add_cuotaventa'
+    raise_exception = True
 
     def get_initial(self):
         initial = {}
@@ -391,10 +399,12 @@ class CuotasPendientesView(LoginRequiredMixin, ListView):
 
 # === PAGOS (CBV) ===
 
-class RegistrarPagoView(LoginRequiredMixin, CreateView):
+class RegistrarPagoView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = PagoCuotaVenta
     form_class = PagoCuotaForm
     template_name = 'creditos_ventas/registrar_pago.html'
+    permission_required = 'creditos_ventas.add_cuotaventa'
+    raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
         self.cuota = get_object_or_404(CuotaVenta, pk=self.kwargs['pk'])

@@ -2,9 +2,11 @@
 {% block title %}Créditos Ventas{% endblock %}
 {% block content %}
 <h2>Facturas</h2>
+{% if perms.creditos_ventas.add_cuotaventa %}
 <a href="{% url 'creditos_ventas:factura_create' %}" class="btn btn-primary mb-3">
   <i class="bi bi-plus-lg"></i> Nueva Factura
 </a>
+{% endif %}
 <a href="?{% for k, v in request.GET.items %}{% if k != 'format' %}{{ k }}={{ v }}&{% endif %}{% endfor %}format=pdf"
    class="btn btn-outline-danger mb-3" title="Exportar a PDF">
   <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
@@ -94,12 +96,16 @@
         <a href="{% url 'creditos_ventas:factura_detail' factura.pk %}" class="btn btn-sm btn-outline-dark" title="Detalle / Imprimir">
           <i class="bi bi-printer"></i>
         </a>
+        {% if perms.creditos_ventas.change_cuotaventa %}
         <a href="{% url 'creditos_ventas:factura_update' factura.pk %}" class="btn btn-sm btn-warning" title="Editar">
           <i class="bi bi-pencil"></i>
         </a>
+        {% endif %}
+        {% if perms.creditos_ventas.delete_cuotaventa %}
         <a href="{% url 'creditos_ventas:factura_delete' factura.pk %}" class="btn btn-sm btn-danger" title="Eliminar">
           <i class="bi bi-trash"></i>
         </a>
+        {% endif %}
         {% if factura.tipo_pago == 'CREDITO' %}
         <a href="{% url 'creditos_ventas:cuota_list' factura.pk %}" class="btn btn-sm btn-info" title="Ver Cuotas">
           <i class="bi bi-list-check"></i> Cuotas

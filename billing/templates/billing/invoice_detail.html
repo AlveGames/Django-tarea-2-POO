@@ -16,6 +16,32 @@
                 <p><strong>Factura #:</strong> {{ invoice.id }}</p>
             </div>
         </div>
+
+        {% if invoice.numero_autorizacion %}
+        <div class="card border-success mb-3">
+            <div class="card-body">
+                <div class="row align-items-center g-3">
+                    <div class="col-md-8">
+                        <span class="badge bg-success mb-2"><i class="bi bi-patch-check-fill me-1"></i>AUTORIZADO</span>
+                        <p class="mb-1"><strong>Número de autorización:</strong><br>
+                           <span class="font-monospace small">{{ invoice.numero_autorizacion }}</span></p>
+                        <p class="mb-2"><strong>Clave de acceso:</strong><br>
+                           <span class="font-monospace small">{{ invoice.clave_acceso }}</span></p>
+                        {% if invoice.xml_generado %}
+                        <a href="{% url 'billing:descargar_xml' invoice.pk %}" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-filetype-xml me-1"></i>Descargar XML
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <img src="{% url 'billing:invoice_qr' invoice.pk %}" alt="Código QR de la factura"
+                             class="img-fluid" style="max-width:140px;">
+                        <p class="text-muted small mb-0">Documento autorizado por el SRI</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         <table class="table table-bordered">
             <thead class="table-dark">
                 <tr>
@@ -57,7 +83,9 @@
             </tfoot>
         </table>
         <a href="{% url 'billing:invoice_list' %}" class="btn btn-secondary">Volver a la lista</a>
+        {% if perms.billing.delete_invoice %}
         <a href="{% url 'billing:invoice_delete' invoice.pk %}" class="btn btn-danger">Eliminar</a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

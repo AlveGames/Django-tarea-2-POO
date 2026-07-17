@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Brand, Product
+from .models import Brand, Customer, Product
 from django.forms import inlineformset_factory
 from .models import Invoice, InvoiceDetail
 
@@ -25,6 +25,20 @@ class BrandForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class':'form-control','rows':3}),
             'is_active': forms.CheckboxInput(attrs={'class':'form-check-input'}),
         }
+
+class CustomerForm(forms.ModelForm):
+    """Formulario rápido de cliente, usado también en el modal de la factura."""
+    class Meta:
+        model = Customer
+        fields = ['dni', 'first_name', 'last_name', 'email', 'phone']
+        widgets = {
+            'dni': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cédula/RUC'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombres'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellidos'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'correo@ejemplo.com'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'}),
+        }
+
 
 class InvoiceForm(forms.ModelForm):
     class Meta:

@@ -2,7 +2,9 @@
 {% block title %}Compras{% endblock %}
 {% block content %}
 <h2>Compras</h2>
+{% if perms.purchasing.add_purchase %}
 <a href="{% url 'purchasing:purchase_create' %}" class="btn btn-primary mb-3">+ Nueva Compra</a>
+{% endif %}
 
 <div class="filter-container">
     <form method="get" class="row row-cols-1 row-cols-md-5 g-3 align-items-end">
@@ -64,7 +66,9 @@
         <td class="text-end fw-bold">${{ item.total }}</td>
         <td>
             <a href="{% url 'purchasing:purchase_detail' item.pk %}" class="btn btn-sm btn-info">Ver</a>
+            {% if perms.purchasing.delete_purchase %}
             <a href="{% url 'purchasing:purchase_delete' item.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+            {% endif %}
         </td>
     </tr>
     {% empty %}

@@ -112,10 +112,13 @@
             </div>
           </div>
 
-          <div class="payment-fields" data-method="paypal">
-            <label class="form-label">Correo de PayPal</label>
-            {{ form.paypal_email }}
-            {% for e in form.paypal_email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          <div class="payment-fields" data-method="paypal" id="paypal-section">
+            <p class="text-muted">Serás redirigido a PayPal para completar tu pago de forma segura.</p>
+            <button type="button" id="btn-paypal"
+                    style="background:#FFB300; border:none; border-radius:4px; padding:8px 16px;">
+              <img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_100x26.png" alt="PayPal">
+            </button>
+            <div id="paypal-error" class="text-danger small mt-2 d-none"></div>
           </div>
 
           <div class="payment-fields" data-method="transfer">
@@ -153,7 +156,7 @@
             <span>Total</span>
             <span>${{ total }}</span>
           </div>
-          <button type="submit" class="btn btn-success w-100 mt-4">
+          <button type="submit" id="main-pay-btn" class="btn btn-success w-100 mt-4">
             <i class="bi bi-lock-fill me-1"></i> Pagar ahora
           </button>
         </div>
@@ -169,6 +172,7 @@
   var radios = document.querySelectorAll('.payment-radio');
   var options = document.querySelectorAll('.payment-option');
   var fieldGroups = document.querySelectorAll('.payment-fields');
+  var mainPayBtn = document.getElementById('main-pay-btn');
 
   function sync() {
     var selected = document.querySelector('.payment-radio:checked');
@@ -182,10 +186,60 @@
     fieldGroups.forEach(function (group) {
       group.classList.toggle('active', group.dataset.method === method);
     });
+
+    // El pago con PayPal se confirma en la ventana emergente, no con este botón
+    if (mainPayBtn) mainPayBtn.classList.toggle('d-none', method === 'paypal');
   }
 
   radios.forEach(function (r) { r.addEventListener('change', sync); });
   sync();
+
+  // === Flujo de PayPal simulado ===
+  var btnPaypal = document.getElementById('btn-paypal');
+  if (btnPaypal) {
+    var checkoutForm = document.getElementById('checkout-form');
+    var paypalError = document.getElementById('paypal-error');
+    var shippingFields = ['full_name', 'email', 'phone', 'address', 'dni'];
+
+    btnPaypal.addEventListener('click', function () {
+      var valid = true;
+      shippingFields.forEach(function (name) {
+        var el = checkoutForm.elements[name];
+        if (el && !el.reportValidity()) valid = false;
+      });
+      if (!valid) return;
+
+      paypalError.classList.add('d-none');
+      btnPaypal.disabled = true;
+
+      var formData = new FormData();
+      shippingFields.forEach(function (name) {
+        formData.append(name, checkoutForm.elements[name].value);
+      });
+
+      fetch('{% url "shop:paypal_stage" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        body: formData,
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.success) {
+            window.open('/shop/paypal/', 'PayPal', 'width=500,height=620,scrollbars=no');
+          } else {
+            paypalError.textContent = 'Revisa los datos del formulario antes de continuar con PayPal.';
+            paypalError.classList.remove('d-none');
+          }
+        })
+        .catch(function () {
+          paypalError.textContent = 'Ocurrió un error de conexión. Intenta de nuevo.';
+          paypalError.classList.remove('d-none');
+        })
+        .finally(function () {
+          btnPaypal.disabled = false;
+        });
+    });
+  }
 })();
 </script>
 

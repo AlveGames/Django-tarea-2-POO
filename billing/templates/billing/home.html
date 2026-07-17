@@ -1,5 +1,6 @@
 {% extends 'billing/base.html' %}
 {% load i18n %}
+{% load security_tags %}
 {% block title %}Inicio - TecnoStock{% endblock %}
 {% block page_title %}{% trans "Dashboard" %}{% endblock %}
 {% block content %}
@@ -11,13 +12,16 @@
 </div>
 
 <div class="row mb-4 g-3">
+    {% if user|has_group:'Administrador' or user|has_group:'Analista de Compras' or user|has_group:'Gerente' %}
     <div class="col-md-4 col-lg-2">
         <div class="card stat-card stat-card-blue">
             <div class="card-body">
                 <div class="stat-icon-badge"><i class="bi bi-tags"></i></div>
                 <h2 class="stat-number">{{ total_brands }}</h2>
                 <p class="stat-label">{% trans "Marcas" %}</p>
+                {% if not user|has_group:'Gerente' %}
                 <a href="{% url 'billing:brand_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -27,17 +31,24 @@
                 <div class="stat-icon-badge"><i class="bi bi-box-seam"></i></div>
                 <h2 class="stat-number">{{ total_products }}</h2>
                 <p class="stat-label">{% trans "Productos" %}</p>
+                {% if not user|has_group:'Gerente' %}
                 <a href="{% url 'billing:product_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
+                {% endif %}
             </div>
         </div>
     </div>
+    {% endif %}
+
+    {% if user|has_group:'Administrador' or user|has_group:'Vendedor' or user|has_group:'Gerente' %}
     <div class="col-md-4 col-lg-2">
         <div class="card stat-card stat-card-cyan">
             <div class="card-body">
                 <div class="stat-icon-badge"><i class="bi bi-people"></i></div>
                 <h2 class="stat-number">{{ total_customers }}</h2>
                 <p class="stat-label">{% trans "Clientes" %}</p>
+                {% if not user|has_group:'Gerente' %}
                 <a href="{% url 'billing:customer_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -47,17 +58,9 @@
                 <div class="stat-icon-badge"><i class="bi bi-receipt"></i></div>
                 <h2 class="stat-number">{{ total_invoices }}</h2>
                 <p class="stat-label">{% trans "Facturas" %}</p>
+                {% if not user|has_group:'Gerente' %}
                 <a href="{% url 'billing:invoice_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-lg-2">
-        <div class="card stat-card stat-card-orange">
-            <div class="card-body">
-                <div class="stat-icon-badge"><i class="bi bi-cart-check"></i></div>
-                <h2 class="stat-number">{{ total_purchases }}</h2>
-                <p class="stat-label">{% trans "Compras" %}</p>
-                <a href="{% url 'purchasing:purchase_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -67,10 +70,28 @@
                 <div class="stat-icon-badge"><i class="bi bi-exclamation-circle"></i></div>
                 <h2 class="stat-number">{{ creditos_ventas_pendientes }}</h2>
                 <p class="stat-label stat-label-sm">{% trans "Créd. Ventas Pend." %}</p>
+                {% if not user|has_group:'Gerente' %}
                 <a href="{% url 'creditos_ventas:factura_list' %}?estado=PENDIENTE" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
+                {% endif %}
             </div>
         </div>
     </div>
+    {% endif %}
+
+    {% if user|has_group:'Administrador' or user|has_group:'Analista de Compras' or user|has_group:'Gerente' %}
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card stat-card-orange">
+            <div class="card-body">
+                <div class="stat-icon-badge"><i class="bi bi-cart-check"></i></div>
+                <h2 class="stat-number">{{ total_purchases }}</h2>
+                <p class="stat-label">{% trans "Compras" %}</p>
+                {% if not user|has_group:'Gerente' %}
+                <a href="{% url 'purchasing:purchase_list' %}" class="stat-link">{% trans "Ver todas" %} <i class="bi bi-arrow-right"></i></a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <div class="row">

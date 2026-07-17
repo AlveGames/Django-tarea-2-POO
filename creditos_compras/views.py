@@ -3,7 +3,7 @@ from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Max, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -87,10 +87,12 @@ class CompraDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class CompraCreateView(LoginRequiredMixin, CreateView):
+class CompraCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Purchase
     form_class = CompraCreditoForm
     template_name = 'creditos_compras/compra_form.html'
+    permission_required = 'creditos_compras.add_cuotacompra'
+    raise_exception = True
 
     def form_valid(self, form):
         compra = form.save(commit=False)
@@ -111,11 +113,13 @@ class CompraCreateView(LoginRequiredMixin, CreateView):
         return redirect('creditos_compras:compra_list')
 
 
-class CompraUpdateView(LoginRequiredMixin, UpdateView):
+class CompraUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Purchase
     form_class = CompraCreditoForm
     template_name = 'creditos_compras/compra_form.html'
     success_url = reverse_lazy('creditos_compras:compra_list')
+    permission_required = 'creditos_compras.change_cuotacompra'
+    raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -248,10 +252,12 @@ class CompraUpdateView(LoginRequiredMixin, UpdateView):
         return redirect(self.success_url)
 
 
-class CompraDeleteView(LoginRequiredMixin, DeleteView):
+class CompraDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Purchase
     template_name = 'creditos_compras/compra_confirm_delete.html'
     success_url = reverse_lazy('creditos_compras:compra_list')
+    permission_required = 'creditos_compras.delete_cuotacompra'
+    raise_exception = True
 
     def post(self, request, *args, **kwargs):
         # Django 6's BaseDeleteView.post() llama a form_valid() -> object.delete()
@@ -281,7 +287,9 @@ class CompraDeleteView(LoginRequiredMixin, DeleteView):
 
 # === CUOTAS (CBV) ===
 
-class GenerarCuotasCompraView(LoginRequiredMixin, View):
+class GenerarCuotasCompraView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'creditos_compras.add_cuotacompra'
+    raise_exception = True
 
     def get_initial(self):
         initial = {}
@@ -389,10 +397,12 @@ class CuotasCompraPendientesView(LoginRequiredMixin, ListView):
 
 # === PAGOS (CBV) ===
 
-class RegistrarPagoCompraView(LoginRequiredMixin, CreateView):
+class RegistrarPagoCompraView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = PagoCuotaCompra
     form_class = PagoCuotaCompraForm
     template_name = 'creditos_compras/registrar_pago.html'
+    permission_required = 'creditos_compras.add_cuotacompra'
+    raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
         self.cuota = get_object_or_404(CuotaCompra, pk=self.kwargs['pk'])
