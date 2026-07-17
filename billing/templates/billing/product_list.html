@@ -382,8 +382,17 @@
           {% if perms.billing.change_product %}
           <a href="{% url 'billing:product_update' item.pk %}" class="btn btn-sm btn-warning">Editar</a>
           {% endif %}
-          {% if perms.billing.delete_product %}
-          <a href="{% url 'billing:product_delete' item.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+          {% if item.invoice_details.exists or item.purchase_details.exists %}
+            {% if perms.billing.change_product %}
+            <form method="post" action="{% url 'billing:product_deactivate' item.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-secondary" title="Este producto está asociado a facturas o compras">Desactivar</button>
+            </form>
+            {% endif %}
+          {% else %}
+            {% if perms.billing.delete_product %}
+            <a href="{% url 'billing:product_delete' item.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+            {% endif %}
           {% endif %}
         </td>
 

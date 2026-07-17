@@ -54,3 +54,17 @@ def audit_action(action_name):
             return response
         return wrapper
     return decorator
+
+
+def registrar_actividad(usuario, accion, modulo, descripcion, request=None):
+    from billing.models import Actividad
+    ip = None
+    if request:
+        ip = request.META.get('REMOTE_ADDR')
+    Actividad.objects.create(
+        usuario=usuario,
+        accion=accion,
+        modulo=modulo,
+        descripcion=descripcion,
+        ip=ip
+    )

@@ -7,6 +7,7 @@ from decimal import Decimal
 from .models import Purchase, PurchaseDetail
 from .forms import PurchaseForm, PurchaseDetailFormSet, PurchaseFilterForm
 from billing.models import Product
+from shared.decorators import registrar_actividad
 
 @login_required
 def purchase_list(request):
@@ -56,6 +57,7 @@ def purchase_create(request):
             purchase.tax = subtotal * Decimal('0.15')
             purchase.total = purchase.subtotal + purchase.tax
             purchase.save()
+            registrar_actividad(request.user, 'CREAR', 'Compras', f'Creó compra #{purchase.id}', request)
             messages.success(request, f'Purchase #{purchase.id} created! Total: ${purchase.total}')
             return redirect('purchasing:purchase_list')
     else:
@@ -82,6 +84,7 @@ def purchase_delete(request, pk):
     if request.method == 'POST':
         purchase_id = purchase.id
         purchase.delete()
+        registrar_actividad(request.user, 'ELIMINAR', 'Compras', f'Eliminó compra #{purchase_id}', request)
         messages.success(request, f'Purchase #{purchase_id} deleted!')
         return redirect('purchasing:purchase_list')
     return render(request, 'purchasing/purchase_confirm_delete.html', {'object': purchase})

@@ -27,6 +27,7 @@
 {% url 'security:user_list' as user_list_url %}
 {% url 'security:group_list' as group_list_url %}
 {% url 'security:permission_list' as permission_list_url %}
+{% url 'billing:actividad_list' as actividad_list_url %}
 
 <button class="sidebar-mobile-toggle" id="sidebarToggler" type="button" aria-label="Abrir menú">
   <i class="bi bi-list"></i>
@@ -120,6 +121,9 @@
             <li><a class="sidebar-sublink {% if request.path == user_list_url %}active{% endif %}" href="{{ user_list_url }}">{% trans "Usuarios" %}</a></li>
             <li><a class="sidebar-sublink {% if request.path == group_list_url %}active{% endif %}" href="{{ group_list_url }}">{% trans "Roles" %}</a></li>
             <li><a class="sidebar-sublink {% if request.path == permission_list_url %}active{% endif %}" href="{{ permission_list_url }}">{% trans "Permisos" %}</a></li>
+            {% if user|has_group:'Administrador' %}
+            <li><a class="sidebar-sublink {% if request.path == actividad_list_url %}active{% endif %}" href="{{ actividad_list_url }}">{% trans "Historial" %}</a></li>
+            {% endif %}
           </ul>
         </li>
         {% endif %}
@@ -169,6 +173,9 @@
   <header class="topbar">
     <h4 class="topbar-title">{% block page_title %}{{ request.resolver_match.url_name|default:"dashboard"|humanize_slug }}{% endblock %}</h4>
     <div class="topbar-actions">
+      <button id="btn-dark-mode" class="topbar-icon-btn" type="button" onclick="toggleDarkMode()" title="Modo oscuro">
+        <i class="bi bi-moon-fill" id="icon-dark"></i>
+      </button>
       <div class="dropdown">
         <button class="topbar-icon-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Idioma">
           <i class="bi bi-translate"></i>
@@ -273,6 +280,31 @@
       });
     });
   })();
+
+  // ===== Modo oscuro =====
+  function toggleDarkMode() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+
+    if (isDark) {
+      html.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+      document.getElementById('icon-dark').className = 'bi bi-moon-fill';
+    } else {
+      html.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+      document.getElementById('icon-dark').className = 'bi bi-sun-fill';
+    }
+  }
+
+  // Cargar preferencia guardada
+  document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('icon-dark').className = 'bi bi-sun-fill';
+    }
+  });
 </script>
 </body>
 </html>

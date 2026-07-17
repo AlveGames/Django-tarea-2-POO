@@ -19,8 +19,8 @@ from django.utils.translation import gettext as _
 from .models import *
 from .forms import SignUpForm, BrandForm, CustomerForm, ProductForm, InvoiceForm, InvoiceDetailFormSet
 from .utils import generar_factura_electronica, generar_qr, generar_xml
-from shared.mixins import ExportMixin
-from shared.decorators import audit_action
+from shared.mixins import ExportMixin, GroupRequiredMixin
+from shared.decorators import audit_action, registrar_actividad
 from decimal import Decimal
 from purchasing.models import Purchase
 
@@ -519,6 +519,31 @@ class ProductDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView)
     permission_required = 'billing.delete_product'
     raise_exception = True
 
+    def post(self, request, *args, **kwargs):
+        product = self.get_object()
+
+        # Verificar si tiene facturas o compras asociadas
+        if product.invoice_details.exists() or product.purchase_details.exists():
+            messages.error(
+                request,
+                f'No se puede eliminar "{product.name}" porque está asociado a facturas o compras. '
+                f'Puedes desactivarlo en vez de eliminarlo.'
+            )
+            return redirect('billing:product_list')
+
+        return super().post(request, *args, **kwargs)
+
+
+@login_required
+@permission_required('billing.change_product', raise_exception=True)
+@require_POST
+def product_deactivate(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    product.is_active = False
+    product.save(update_fields=['is_active'])
+    messages.success(request, f'"{product.name}" fue desactivado.')
+    return redirect('billing:product_list')
+
 # === CUSTOMER (CBV) ===
 class CustomerListView(LoginRequiredMixin, ListView):
     model = Customer; template_name = 'billing/customer_list.html'; context_object_name = 'items'; paginate_by = 10
@@ -772,6 +797,8 @@ def invoice_create(request):
                 generar_factura_electronica(invoice)
                 send_invoice_email(invoice)
 
+                registrar_actividad(request.user, 'CREAR', 'Facturas', f'Creó factura #{invoice.id}', request)
+
                 messages.success(request, f'Invoice #{invoice.id} created! Total: ${invoice.total}')
                 return redirect('billing:invoice_list')
     else:
@@ -825,6 +852,7 @@ def invoice_delete(request, pk):
             invoice.cuotas.all().delete()
             invoice_id = invoice.id
             invoice.delete()
+            registrar_actividad(request.user, 'ELIMINAR', 'Facturas', f'Eliminó factura #{invoice_id}', request)
             messages.success(request, f'Invoice #{invoice_id} deleted!')
             return redirect('billing:invoice_list')
 
@@ -840,6 +868,54 @@ def invoice_delete(request, pk):
 
         invoice_id = invoice.id
         invoice.delete()
+        registrar_actividad(request.user, 'ELIMINAR', 'Facturas', f'Eliminó factura #{invoice_id}', request)
         messages.success(request, f'Invoice #{invoice_id} deleted!')
         return redirect('billing:invoice_list')
     return render(request, 'billing/invoice_confirm_delete.html', {'object': invoice})
+
+
+# === ACTIVIDAD (CBV) ===
+class ActividadListView(LoginRequiredMixin, GroupRequiredMixin, ExportMixin, ListView):
+    model = Actividad
+    template_name = 'billing/actividad_list.html'
+    context_object_name = 'actividades'
+    paginate_by = 20
+    group_required = ['Administrador']
+    export_title = 'Historial de Actividad'
+
+    def get_export_fields(self):
+        return [
+            ('Fecha', lambda obj: obj.fecha.strftime('%d/%m/%Y %H:%M')),
+            ('Usuario', lambda obj: str(obj.usuario) if obj.usuario else '-'),
+            ('Rol', lambda obj: ', '.join(g.name for g in obj.usuario.groups.all()) if obj.usuario else '-'),
+            ('Acción', 'accion'),
+            ('Módulo', 'modulo'),
+            ('Descripción', 'descripcion'),
+            ('IP', lambda obj: obj.ip or '-'),
+        ]
+
+    def get_queryset(self):
+        qs = Actividad.objects.select_related('usuario').prefetch_related('usuario__groups')
+        p = self.request.GET
+
+        usuario = p.get('usuario', '').strip()
+        accion = p.get('accion', '')
+        fecha_desde = p.get('fecha_desde', '')
+        fecha_hasta = p.get('fecha_hasta', '')
+
+        if usuario:
+            qs = qs.filter(usuario__username__icontains=usuario)
+        if accion:
+            qs = qs.filter(accion=accion)
+        if fecha_desde:
+            qs = qs.filter(fecha__date__gte=fecha_desde)
+        if fecha_hasta:
+            qs = qs.filter(fecha__date__lte=fecha_hasta)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['filters'] = self.request.GET
+        ctx['acciones'] = Actividad.ACCIONES
+        return ctx

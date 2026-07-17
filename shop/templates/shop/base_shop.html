@@ -46,6 +46,11 @@
       </ul>
 
       <ul class="navbar-nav align-items-lg-center gap-lg-2">
+        <li class="nav-item mb-2 mb-lg-0">
+          <button id="btn-dark-mode" class="btn btn-outline-light btn-sm" type="button" onclick="toggleDarkMode()" title="Modo oscuro">
+            <i class="bi bi-moon-fill" id="icon-dark"></i>
+          </button>
+        </li>
         {% if user.is_authenticated %}
           {% if user|has_group:'Administrador' or user|has_group:'Vendedor' or user|has_group:'Analista de Compras' %}
           <li class="nav-item mb-2 mb-lg-0">
@@ -96,5 +101,31 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // ===== Modo oscuro =====
+  function toggleDarkMode() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+
+    if (isDark) {
+      html.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+      document.getElementById('icon-dark').className = 'bi bi-moon-fill';
+    } else {
+      html.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+      document.getElementById('icon-dark').className = 'bi bi-sun-fill';
+    }
+  }
+
+  // Cargar preferencia guardada
+  document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('icon-dark').className = 'bi bi-sun-fill';
+    }
+  });
+</script>
 </body>
 </html>

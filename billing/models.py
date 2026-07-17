@@ -1,5 +1,6 @@
+from django.contrib.auth.models import User
 from django.db import models
-from shared.validators import validate_cedula_ec 
+from shared.validators import validate_cedula_ec
 
 class Brand(models.Model):
     """Marcas de productos."""
@@ -152,3 +153,21 @@ class InvoiceDetail(models.Model):
     def save(self, *args, **kwargs):
         self.subtotal = self.quantity * self.unit_price
         super().save(*args, **kwargs)
+
+class Actividad(models.Model):
+    """Historial de actividad de los usuarios en el sistema."""
+    ACCIONES = [('CREAR', 'CREAR'), ('EDITAR', 'EDITAR'), ('ELIMINAR', 'ELIMINAR'), ('VER', 'VER')]
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    accion = models.CharField(max_length=50, choices=ACCIONES)
+    modulo = models.CharField(max_length=50)
+    descripcion = models.TextField()
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha']
+        verbose_name = 'Actividad'
+        verbose_name_plural = 'Actividades'
+
+    def __str__(self):
+        return f'{self.usuario} - {self.accion} - {self.modulo}'

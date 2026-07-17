@@ -30,6 +30,7 @@ urlpatterns = [
     path('products/<int:pk>/', views.ProductDetailView.as_view(), name='product_detail'),
     path('products/<int:pk>/edit/', views.ProductUpdateView.as_view(), name='product_update'),
     path('products/<int:pk>/delete/', views.ProductDeleteView.as_view(), name='product_delete'),
+    path('products/<int:pk>/deactivate/', views.product_deactivate, name='product_deactivate'),
     # Customer
     path('customers/', views.CustomerListView.as_view(), name='customer_list'),
     path('customers/create/', views.CustomerCreateView.as_view(), name='customer_create'),
@@ -44,4 +45,6 @@ urlpatterns = [
     path('invoices/<int:pk>/delete/', views.invoice_delete, name='invoice_delete'),
     path('invoices/<int:pk>/xml/', views.descargar_xml, name='descargar_xml'),
     path('invoices/<int:pk>/qr/', views.invoice_qr, name='invoice_qr'),
+    # Actividad
+    path('actividad/', views.ActividadListView.as_view(), name='actividad_list'),
 ]

@@ -64,6 +64,10 @@
     margin: 0;
     font-size: .9rem;
   }
+
+  [data-theme="dark"] .categoria-title { color: #FFFFFF; }
+  [data-theme="dark"] .modulo-card { border-color: #444444; }
+  [data-theme="dark"] .modulo-card-body { background: #2D2D2D; color: #FFFFFF; }
 </style>
 
 <h2 class="mb-4">{% if object %}Editar Rol: {{ object.name }}{% else %}Nuevo Rol{% endif %}</h2>
